@@ -1,0 +1,539 @@
+---
+// Board copy. `k` is the standing label on the left, `t` the line that turns.
+const board = [
+  { k: 'Program', t: 'Summer Travel' },
+  { k: 'Program', t: 'Box Travel' },
+  { k: '2027',    t: 'Five Tournaments' },
+  { k: 'Result',  t: 'College Placement' },
+  { k: 'Based',   t: 'Fort Wayne, IN' },
+];
+// Fixed cell count = longest line, so the row is the same width all cycle.
+const CELLS = Math.max(...board.map((b) => b.t.length));
+const first = board[0].t.toUpperCase().padEnd(CELLS, ' ').split('');
+---
+
+<section class="hero">
+  <!-- The video is the ground the headline stands on, not a banner above it. -->
+  <div class="hero__media">
+    <!-- The frame the page opens on. It is a plain image, so a browser that
+         refuses to autoplay shows THIS — never a video element with a play
+         glyph stamped on it. -->
+    <img class="hero__still" src="/hero-poster.jpg" alt="" aria-hidden="true" />
+
+    <video
+      class="hero__video"
+      data-hero-video
+      autoplay
+      muted
+      loop
+      playsinline
+      preload="auto"
+      disablepictureinpicture
+      tabindex="-1"
+      aria-hidden="true"
+    >
+      <!-- Phones get the 720p cut; everything else the 1080p. -->
+      <source src="/hero-720.mp4" type="video/mp4" media="(max-width: 900px)" />
+      <source src="/hero.mp4" type="video/mp4" />
+    </video>
+    <div class="hero__scrim" aria-hidden="true"></div>
+    <div class="hero__bg" aria-hidden="true"></div>
+  </div>
+
+  <div class="shell hero__inner">
+    <div class="eyebrow">
+      <span class="label">[ Est. Fort Wayne, IN ]</span>
+      <span class="eyebrow__rule"></span>
+    </div>
+
+    <h1 class="hero__title display">
+      <span class="hero__line">The off-season</span>
+      <span class="hero__line display--ghost">is where</span>
+      <span class="hero__line display--gold">it's won.</span>
+    </h1>
+
+    <div class="hero__foot">
+      <p class="lede">
+        Revolt runs two rosters out of Fort Wayne: box through January,
+        field through the summer. Every summer stop is a recruiting weekend, and
+        the coaches on the field run college and high school programs of their own.
+      </p>
+      <div class="hero__actions">
+        <a href="/signup" class="btn btn--gold"><span>Register</span><span class="btn__arrow">→</span></a>
+        <a href="#programs" class="btn"><span>See the programs</span><span class="btn__arrow">→</span></a>
+        <a href="/why" class="btn"><span>Why Revolt</span><span class="btn__arrow">→</span></a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Split-flap board. Decorative: the same copy is in the sections below,
+       so it stays out of the accessibility tree. -->
+  <div class="board" aria-hidden="true" data-board data-phrases={JSON.stringify(board)}>
+    <div class="board__rule board__rule--top"><i></i></div>
+
+    <div class="shell board__inner">
+      <span class="board__kicker">
+        <i class="board__led"></i>
+        <span class="board__kickerText" data-kicker>{board[0].k}</span>
+      </span>
+
+      <div class="board__cells">
+        {first.map((ch) => (
+          <span class:list={['cell', ch === ' ' && 'cell--gap']} data-ch={ch}>
+            <span class="cell__face">{ch === ' ' ? ' ' : ch}</span>
+          </span>
+        ))}
+      </div>
+
+      <div class="board__pips">
+        {board.map((_, i) => <i class:list={['pip', i === 0 && 'is-on']}></i>)}
+      </div>
+    </div>
+
+    <div class="board__rule board__rule--bot"><i></i></div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: clamp(560px, 82vh, 880px);
+    min-height: clamp(560px, 82svh, 880px);
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  /* --- Photographic ground --- */
+  .hero__media {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--navy-deep);
+  }
+
+  .hero__still,
+  .hero__video {
+    position: absolute;
+    inset: 0;
+    display: block;
+    pointer-events: none;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 58% 42%;
+    /* Green field drops back; the gold pinnies stay the only chroma on screen. */
+    filter: saturate(0.72) contrast(1.08) brightness(0.74);
+    transform: scale(1.06);
+    animation: settle 2.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* Until the first frame is actually playing the video is not painted at all,
+     which is the only way to be certain no browser draws its own play button
+     over it. Script-driven, so with JS off the video just shows as before. */
+  .hero__video.is-waiting { opacity: 0; }
+  .hero__video { transition: opacity 0.5s ease; }
+
+  /* iOS paints a play glyph over any video it hasn't started, and Safari keeps
+     a controls layer in the shadow DOM either way. Nothing here is a control —
+     this is background footage — so both go. */
+  .hero__video::-webkit-media-controls,
+  .hero__video::-webkit-media-controls-start-playback-button,
+  .hero__video::-webkit-media-controls-panel,
+  .hero__video::-webkit-media-controls-overlay-play-button {
+    display: none !important;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  /* Faces breathe up top, type gets a dark floor, photo dissolves into the ticker. */
+  .hero__scrim {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(95deg, rgba(10, 15, 22, 0.74) 0%, rgba(10, 15, 22, 0.18) 52%, transparent 100%),
+      linear-gradient(
+        180deg,
+        rgba(10, 15, 22, 0.6) 0%,
+        rgba(10, 15, 22, 0.2) 18%,
+        rgba(10, 15, 22, 0.48) 48%,
+        rgba(10, 15, 22, 0.86) 78%,
+        var(--navy-deep) 100%
+      );
+  }
+
+  /* Field-lines motif, carried over the photo so it reads as brand, not stock. */
+  .hero__bg {
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(90deg, transparent 0 118px, rgba(232, 230, 225, 0.035) 118px 119px);
+    pointer-events: none;
+  }
+
+  .hero__inner {
+    position: relative;
+    /* .shell carries margin-inline:auto, and auto cross-axis margins cancel
+       `stretch` on a flex item — without this the block shrink-wraps its
+       content and drifts to the middle of the frame. */
+    width: 100%;
+    margin-top: auto;
+    padding-top: clamp(3.5rem, 9vh, 7rem);
+    padding-bottom: clamp(2.5rem, 5vw, 4.5rem);
+  }
+
+  .hero .eyebrow { margin-bottom: clamp(1.1rem, 2.4vw, 1.9rem); }
+
+  .hero__title {
+    /* Not --fs-mega: 12vw put this at 173px on a laptop, which left no frame
+       for the video behind it. The 0.85 display leading also collided once
+       the lines were skewed, so it opens up here. */
+    font-size: clamp(2.6rem, 8.6vw, 8rem);
+    line-height: 0.94;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
+    text-shadow: 0 2px 30px rgba(10, 15, 22, 0.55);
+  }
+  .hero__line { display: block; }
+  .hero__line:nth-child(2) { padding-left: clamp(0.75rem, 4vw, 4rem); }
+  .hero__line:nth-child(3) { padding-left: clamp(1.5rem, 8vw, 8rem); }
+
+  /* Slate stroke vanishes against photography — bone holds the outline. */
+  .hero__title .display--ghost {
+    -webkit-text-stroke-color: rgba(232, 230, 225, 0.72);
+  }
+
+  .hero__foot {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: clamp(1.4rem, 2.6vw, 2.1rem);
+  }
+  .hero__actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .hero__foot .lede {
+    color: var(--bone);
+    max-width: 48ch;      /* a readable measure, and it keeps the right of the
+                             frame clear so the footage is actually visible */
+    text-wrap: pretty;    /* no one-word last line */
+  }
+
+  /* --- Load sequence: the image settles as the lines rise. One moment, not five. --- */
+  @keyframes settle {
+    to { transform: scale(1); }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  .hero__inner > * { animation: rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+  .hero .eyebrow { animation-delay: 0.1s; }
+  .hero__line { animation: rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+  .hero__line:nth-child(1) { animation-delay: 0.22s; }
+  .hero__line:nth-child(2) { animation-delay: 0.32s; }
+  .hero__line:nth-child(3) { animation-delay: 0.42s; }
+  .hero__title { animation: none; }
+  .hero__foot { animation-delay: 0.6s; }
+
+  /* --- Split-flap board ---------------------------------------------------
+     A departure board, not a marquee: the line sits still and turns over in
+     place. Only the characters that actually change flip, staggered left to
+     right, so each turn reads as mechanical rather than decorative. -------- */
+  .board {
+    position: relative;
+    background:
+      linear-gradient(180deg, rgba(207, 174, 30, 0.05), transparent 62%),
+      var(--navy-lift);
+    overflow: hidden;
+    padding-block: clamp(0.85rem, 1.9vw, 1.3rem);
+  }
+
+  /* Field-line motif from the hero, held still — the flaps own the motion. */
+  .board::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(90deg, transparent 0 118px, rgba(232, 230, 225, 0.035) 118px 119px);
+    pointer-events: none;
+  }
+
+  .board__inner {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: clamp(1rem, 3vw, 2.5rem);
+  }
+
+  /* Left: status lamp and what the line is naming. */
+  .board__kicker {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-shrink: 0;
+    min-width: 9ch;
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--slate);
+  }
+  .board__led {
+    width: 6px;
+    height: 6px;
+    flex-shrink: 0;
+    background: var(--gold);
+    rotate: 45deg;
+    animation: led 2.6s ease-in-out infinite;
+  }
+  @keyframes led {
+    0%, 100% { opacity: 0.4; box-shadow: 0 0 4px rgba(207, 174, 30, 0.3); }
+    50%      { opacity: 1;   box-shadow: 0 0 12px rgba(232, 198, 42, 0.8); }
+  }
+  .board__kickerText { transition: opacity 0.22s ease, transform 0.22s ease; }
+  .board.is-swap .board__kickerText { opacity: 0; transform: translateY(-6px); }
+
+  /* --- The flaps --- */
+  .board__cells {
+    display: flex;
+    gap: clamp(2px, 0.45vw, 5px);
+    flex: 1;
+    min-width: 0;
+    perspective: 420px;
+  }
+  .cell {
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    /* Fixed pitch: spaces keep their cell, so the row never reflows mid-turn. */
+    width: clamp(0.82rem, 2.35vw, 1.55rem);
+    height: clamp(1.3rem, 3.4vw, 2.2rem);
+    background: rgba(10, 15, 22, 0.62);
+    border: 1px solid rgba(90, 103, 113, 0.22);
+    border-radius: 2px;
+    transition: background 0.45s ease, box-shadow 0.45s ease;
+  }
+  /* The seam a real flap splits on. */
+  .cell::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    top: 50%;
+    height: 1px;
+    z-index: 2;
+    background: rgba(10, 15, 22, 0.85);
+    box-shadow: 0 1px 0 rgba(232, 230, 225, 0.05);
+    pointer-events: none;
+  }
+  .cell--gap { background: transparent; border-color: transparent; }
+  .cell--gap::after { display: none; }
+
+  .cell__face {
+    font-family: var(--font-mono);
+    font-size: clamp(0.62rem, 1.5vw, 1rem);
+    font-weight: 600;
+    line-height: 1;
+    text-transform: uppercase;
+    color: var(--gold-hot);
+    text-shadow: 0 0 12px rgba(207, 174, 30, 0.35);
+    backface-visibility: hidden;
+    /* Return stroke: the flap drops and settles with a little overshoot. */
+    transition: transform 0.17s cubic-bezier(0.2, 1.5, 0.4, 1);
+  }
+  .cell.is-flip .cell__face {
+    /* Leaving stroke: fast and linear — a falling flap has no easing. */
+    transition: transform 0.1s linear;
+    transform: rotateX(-92deg);
+  }
+  /* Flash on landing, then fade out through the base transition. */
+  .cell.is-land {
+    background: rgba(207, 174, 30, 0.16);
+    box-shadow: 0 0 16px rgba(207, 174, 30, 0.2);
+    transition: none;
+  }
+
+  /* Right: which of the five lines is up. */
+  .board__pips {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .pip {
+    width: 14px;
+    height: 2px;
+    background: rgba(90, 103, 113, 0.45);
+    transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1), background 0.5s ease, box-shadow 0.5s ease;
+  }
+  .pip.is-on {
+    width: 30px;
+    background: var(--gold);
+    box-shadow: 0 0 10px rgba(207, 174, 30, 0.5);
+  }
+
+  /* Hairlines: a gold light runs the strip on each turn, and only then. */
+  .board__rule {
+    position: absolute;
+    inset-inline: 0;
+    height: 1px;
+    overflow: hidden;
+    z-index: 3;
+    background: rgba(90, 103, 113, 0.3);
+  }
+  .board__rule--top { top: 0; }
+  .board__rule--bot { bottom: 0; }
+  .board__rule i {
+    position: absolute;
+    inset-block: 0;
+    width: 22%;
+    opacity: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, var(--gold-hot), transparent);
+  }
+  .board.is-turning .board__rule i { animation: ruleRun 1.25s cubic-bezier(0.3, 0, 0.2, 1); }
+  .board.is-turning .board__rule--bot i { animation-direction: reverse; }
+  @keyframes ruleRun {
+    from { transform: translateX(-100%); opacity: 0; }
+    14%  { opacity: 1; }
+    86%  { opacity: 1; }
+    to   { transform: translateX(455%); opacity: 0; }
+  }
+
+
+  @media (max-width: 780px) {
+    .hero {
+      min-height: clamp(520px, 78vh, 720px);
+      min-height: clamp(520px, 78svh, 720px);
+    }
+    /* The left wash is sized for a wide viewport; on a phone it covers the
+       whole screen and smothers the photo. Vertical scrim carries it alone. */
+    .hero__scrim {
+      background: linear-gradient(
+        180deg,
+        rgba(10, 15, 22, 0.64) 0%,
+        rgba(10, 15, 22, 0.31) 20%,
+        rgba(10, 15, 22, 0.59) 50%,
+        rgba(10, 15, 22, 0.9) 80%,
+        var(--navy-deep) 100%
+      );
+    }
+    .hero__still, .hero__video { object-position: 58% 40%; }
+    .hero__inner { padding-top: clamp(2.5rem, 7vh, 5rem); }
+    .hero__title { font-size: clamp(2.4rem, 11.5vw, 4.25rem); }
+    .hero__line:nth-child(2) { padding-left: clamp(0.5rem, 4vw, 2rem); }
+    .hero__line:nth-child(3) { padding-left: clamp(1rem, 8vw, 4rem); }
+    .hero__foot .lede { font-size: 1rem; }
+
+    /* One button, two links. Three stacked boxes ate ~180px of an 844px
+       screen and left nothing of the video showing. Grid so the button keeps
+       its own row at its natural width and the links share the next one. */
+    .hero__actions {
+      display: grid;
+      grid-template-columns: auto auto;
+      justify-content: start;
+      align-items: center;
+      gap: 0.9rem 1.6rem;
+    }
+    .hero__actions .btn--gold { grid-column: 1 / -1; justify-self: start; }
+    .hero__actions .btn:not(.btn--gold) {
+      padding: 0.3rem 0;
+      border: 0;
+      color: var(--bone-dim);
+    }
+    .hero__actions .btn:not(.btn--gold)::after { display: none; }
+    .hero__actions .btn:not(.btn--gold):hover { color: var(--gold); }
+    /* No room for the label and pips beside 18 flaps — the flaps carry it. */
+    .board__kicker, .board__pips { display: none; }
+    .board__cells { justify-content: center; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .board__led, .board.is-turning .board__rule i { animation: none; }
+    .cell__face, .cell.is-flip .cell__face { transition: none; transform: none; }
+    .hero__still, .hero__video { animation: none; transform: none; }
+    .hero__inner > *, .hero__line { animation: none; }
+  }
+</style>
+
+<script>
+  // The hero video plays, full stop. Autoplay still gets refused sometimes —
+  // iOS Low Power Mode is the common one — so it is re-tried on load and then
+  // on the first touch anywhere, which counts as the user gesture Safari wants.
+  const heroVideo = document.querySelector<HTMLVideoElement>('[data-hero-video]');
+  if (heroVideo) {
+    // Hidden until the first frame is on screen; the still behind it carries
+    // the hero in the meantime, so there is never a video to draw a button on.
+    heroVideo.classList.add('is-waiting');
+    heroVideo.addEventListener('playing', () => heroVideo.classList.remove('is-waiting'));
+
+    const kick = () => void heroVideo.play().catch(() => {});
+    kick();
+    heroVideo.addEventListener('loadeddata', kick, { once: true });
+    document.addEventListener('touchstart', kick, { once: true, passive: true });
+    document.addEventListener('click', kick, { once: true });
+  }
+
+  const board = document.querySelector<HTMLElement>('[data-board]');
+
+  if (board) {
+    const phrases: { k: string; t: string }[] = JSON.parse(board.dataset.phrases ?? '[]');
+    const cells = [...board.querySelectorAll<HTMLElement>('.cell')];
+    const kicker = board.querySelector<HTMLElement>('[data-kicker]');
+    const pips = [...board.querySelectorAll<HTMLElement>('.pip')];
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    const HOLD = 3800;   // how long a line stands before it turns
+    const STEP = 26;     // per-cell stagger — the wave across the board
+    const FALL = 100;    // flap down, swap the glyph, flap back
+
+    let index = 0;
+    let timer: number | null = null;
+    let inView = false;
+
+    function turn(next: number) {
+      const phrase = phrases[next];
+      const text = phrase.t.toUpperCase().padEnd(cells.length, ' ');
+      const step = calm.matches ? 0 : STEP;
+      const fall = calm.matches ? 0 : FALL;
+
+      board!.classList.add('is-turning', 'is-swap');
+      window.setTimeout(() => board!.classList.remove('is-swap'), 260);
+      window.setTimeout(() => board!.classList.remove('is-turning'), 1300);
+      window.setTimeout(() => { if (kicker) kicker.textContent = phrase.k; }, 210);
+
+      pips.forEach((pip, n) => pip.classList.toggle('is-on', n === next));
+
+      cells.forEach((cell, n) => {
+        const ch = text[n];
+        if (cell.dataset.ch === ch) return;   // a real board only turns what changed
+        const face = cell.firstElementChild as HTMLElement;
+
+        window.setTimeout(() => {
+          cell.classList.add('is-flip');
+          window.setTimeout(() => {
+            cell.dataset.ch = ch;
+            cell.classList.toggle('cell--gap', ch === ' ');
+            face.textContent = ch === ' ' ? ' ' : ch;
+            cell.classList.remove('is-flip');
+            cell.classList.add('is-land');
+            window.setTimeout(() => cell.classList.remove('is-land'), 240);
+          }, fall);
+        }, n * step);
+      });
+    }
+
+    const start = () => { timer ??= window.setInterval(() => turn(index = (index + 1) % phrases.length), HOLD); };
+    const stop = () => { if (timer) { window.clearInterval(timer); timer = null; } };
+    const sync = () => (inView && !document.hidden ? start() : stop());
+
+    new IntersectionObserver((entries) => {
+      inView = entries[0].isIntersecting;
+      sync();
+    }, { threshold: 0.15 }).observe(board);
+
+    document.addEventListener('visibilitychange', sync);
+  }
+</script>

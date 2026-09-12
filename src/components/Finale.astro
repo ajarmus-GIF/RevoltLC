@@ -1,0 +1,284 @@
+---
+/**
+ * HOME — CLOSING CTA
+ *
+ * The last thing on the page and the loudest: display type at --fs-mega, the
+ * largest on the site, over a wall of gallery photos that drifts vertically.
+ *
+ * The wall is built from the curated `featured` pool rather than the whole
+ * gallery — it runs behind the headline, so a sideline or vendor-tent frame
+ * would read as filler. Columns alternate direction and run at different
+ * speeds; each holds its photos TWICE and travels exactly -50%, which is what
+ * makes the loop seamless rather than snapping at the end.
+ *
+ * The whole wall is rotated -6deg, echoing the wordmark's lean that --lean
+ * applies to the type. It's scaled up to 1.3 so the rotation never exposes a
+ * corner.
+ *
+ * Decorative throughout: the wall is aria-hidden and every tile has an empty
+ * alt, because the photos carry no information the headline doesn't already.
+ * Under prefers-reduced-motion the global reset freezes the drift, and the wall
+ * stands as a still collage — which is why nothing depends on it moving.
+ */
+import { Image } from 'astro:assets';
+import { featured } from '../data/gallery';
+
+const COLS = 5;
+const columns = Array.from({ length: COLS }, (_, c) =>
+  featured.filter((_, i) => i % COLS === c)
+);
+
+const ticker = ['Sign up now', 'Rosters fill fast', 'Summer field + winter box', 'Fort Wayne, IN'];
+---
+
+<section class="finale" id="signup-cta">
+  <!-- ── Photo wall ─────────────────────────────────────────── -->
+  <div class="finale__wall" aria-hidden="true">
+    {columns.map((col, c) => (
+      <div class={`wallCol ${c % 2 === 0 ? 'wallCol--up' : 'wallCol--down'}`} style={`--dur:${52 + c * 9}s`}>
+        {/* Twice through — the second pass is what the loop lands on. */}
+        {[...col, ...col].map((p) => (
+          <div class="wallCell">
+            <Image src={p.src} alt="" widths={[240, 400]} width={400} height={500}
+                   sizes="260px" quality={70} loading="lazy" />
+          </div>
+        ))}
+      </div>
+    ))}
+  </div>
+
+  <div class="finale__scrim" aria-hidden="true"></div>
+  <div class="finale__lines" aria-hidden="true"></div>
+  <div class="finale__pulse" aria-hidden="true"></div>
+
+  <!-- ── Content ────────────────────────────────────────────── -->
+  <div class="shell finale__inner">
+    <div class="eyebrow finale__eyebrow">
+      <span class="label">[ 006 ]</span>
+      <span class="eyebrow__rule"></span>
+      <span class="label label--dim">Last call</span>
+    </div>
+
+    <h2 class="finale__title display">
+      <span class="finale__line">The season</span>
+      <span class="finale__line display--ghost">won't wait</span>
+      <span class="finale__line display--gold">for you.</span>
+    </h2>
+
+    <p class="lede finale__lede">
+      Two rosters, five tournaments, one registration. Pick your program, send the
+      form, and you're on the list that actually matters.
+    </p>
+
+    <div class="finale__actions">
+      <a href="/signup" class="btn btn--gold finale__cta">
+        <span>Sign up now</span><span class="btn__arrow">→</span>
+      </a>
+      <a href="/gallery" class="btn finale__alt">
+        <span>See the photos</span><span class="btn__arrow">→</span>
+      </a>
+    </div>
+
+    <p class="finale__fine label label--dim">
+      Questions first? <a class="clink" href="mailto:Mitchell.Wilkins@RevoltLC.com">Mitchell.Wilkins@RevoltLC.com</a>
+      <span class="finale__sep" aria-hidden="true">/</span> (260) 417-5791
+    </p>
+  </div>
+
+  <!-- Borrowed rhythm from the hero, so the page closes the way it opened. -->
+  <div class="finale__ticker" aria-hidden="true">
+    <div class="finale__track">
+      {Array.from({ length: 3 }, () =>
+        ticker.map((t) => <span class="finale__item">{t}<i class="finale__dot"></i></span>)
+      )}
+    </div>
+  </div>
+</section>
+
+<style>
+  .finale {
+    position: relative;
+    /* Full-bleed: nothing else on the home page breaks the shell, which is
+       what makes this read as the end rather than as one more section. */
+    margin-inline: calc(50% - 50vw);
+    width: 100vw;
+    min-height: clamp(660px, 96vh, 1000px);
+    min-height: clamp(660px, 96svh, 1000px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+    isolation: isolate;
+    background: var(--navy-deep);
+    border-top: 1px solid rgba(90, 103, 113, 0.22);
+  }
+
+  /* ── Wall ───────────────────────────────────────────────── */
+  .finale__wall {
+    position: absolute;
+    inset: -12%;
+    z-index: -3;
+    display: flex;
+    gap: clamp(0.5rem, 1vw, 0.9rem);
+    justify-content: center;
+    /* Same lean as the wordmark. Scaled so no corner is ever exposed. */
+    transform: rotate(-6deg) scale(1.3);
+    transform-origin: center;
+  }
+
+  .wallCol {
+    flex: 0 0 clamp(190px, 17vw, 300px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.5rem, 1vw, 0.9rem);
+    /* Transform-only animation, so it stays on the compositor. */
+    will-change: transform;
+  }
+  .wallCol--up   { animation: drift-up   var(--dur) linear infinite; }
+  .wallCol--down { animation: drift-down var(--dur) linear infinite; }
+
+  /* -50% lands exactly on the start of the duplicated run. */
+  @keyframes drift-up   { from { transform: translateY(0); }     to { transform: translateY(-50%); } }
+  @keyframes drift-down { from { transform: translateY(-50%); }  to { transform: translateY(0); } }
+
+  .wallCell {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    border: 1px solid rgba(90, 103, 113, 0.16);
+    flex-shrink: 0;
+  }
+  .wallCell :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Pushed further back than anywhere else on the site — this sits under
+       the largest type on the page and must never compete with it. */
+    filter: saturate(0.35) contrast(1.1) brightness(0.42);
+  }
+
+  /* ── Overlays ───────────────────────────────────────────── */
+  .finale__scrim {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    background:
+      radial-gradient(ellipse 65% 60% at 50% 52%, rgba(10, 15, 22, 0.93) 0%, rgba(10, 15, 22, 0.72) 45%, transparent 78%),
+      linear-gradient(180deg, var(--navy-deep) 0%, rgba(10, 15, 22, 0.55) 22%, rgba(10, 15, 22, 0.55) 78%, var(--navy-deep) 100%);
+  }
+  .finale__lines {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    background: repeating-linear-gradient(90deg, transparent 0 118px, rgba(232, 230, 225, 0.03) 118px 119px);
+    pointer-events: none;
+  }
+
+  /* Slow gold breath behind the headline — the only moving light in the section. */
+  .finale__pulse {
+    position: absolute;
+    left: 50%;
+    top: 46%;
+    z-index: -2;
+    width: min(1100px, 90vw);
+    height: min(700px, 70vh);
+    transform: translate(-50%, -50%);
+    background: radial-gradient(ellipse at center, rgba(207, 174, 30, 0.2), transparent 68%);
+    animation: breathe 9s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: 0.55; transform: translate(-50%, -50%) scale(0.94); }
+    50%      { opacity: 1;    transform: translate(-50%, -50%) scale(1.06); }
+  }
+
+  /* ── Content ────────────────────────────────────────────── */
+  .finale__inner { position: relative; text-align: center; padding-block: clamp(4rem, 9vw, 7rem); }
+  .finale__eyebrow { justify-content: center; }
+  .finale__eyebrow .eyebrow__rule { max-width: 140px; }
+
+  .finale__title {
+    /* The largest type on the site — this is the page's final word. */
+    font-size: var(--fs-mega);
+    display: grid;
+    justify-items: center;
+    gap: 0.02em;
+    margin-bottom: clamp(1.5rem, 3vw, 2.25rem);
+    /* .display skews from the left; centred lines need the origin centred. */
+    transform-origin: center;
+  }
+  .finale__line { display: block; }
+
+  .finale__lede { margin-inline: auto; text-align: center; }
+
+  .finale__actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: clamp(2rem, 4vw, 3rem);
+  }
+
+  /* Deliberately outsized against every other .btn on the site. */
+  .finale__cta {
+    font-size: 0.92rem;
+    padding: 1.5rem 3.25rem;
+    letter-spacing: 0.2em;
+    box-shadow: 0 24px 70px -28px rgba(207, 174, 30, 0.85);
+  }
+  .finale__alt { padding: 1.5rem 2.25rem; }
+
+  .finale__fine { font-size: 0.66rem; margin-top: clamp(1.75rem, 3vw, 2.5rem); line-height: 1.9; }
+  .finale__sep { color: var(--gold-deep); margin-inline: 0.5rem; }
+
+  /* ── Ticker ─────────────────────────────────────────────── */
+  .finale__ticker {
+    position: relative;
+    overflow: hidden;
+    border-top: 1px solid rgba(90, 103, 113, 0.22);
+    padding-block: 1rem;
+    background: rgba(10, 15, 22, 0.72);
+    backdrop-filter: blur(4px);
+  }
+  .finale__track {
+    display: flex;
+    width: max-content;
+    animation: marquee 38s linear infinite;
+  }
+  @keyframes marquee { to { transform: translateX(-33.333%); } }
+  .finale__item {
+    display: flex;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--bone-dim);
+    white-space: nowrap;
+  }
+  .finale__dot {
+    width: 5px;
+    height: 5px;
+    background: var(--gold);
+    margin-inline: 1.75rem;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 900px) {
+    /* Two columns is plenty of texture at this width, and it keeps a phone
+       from decoding ten drifting images at once. */
+    .wallCol:nth-child(n + 4) { display: none; }
+    .finale__wall { transform: rotate(-6deg) scale(1.6); }
+  }
+  @media (max-width: 560px) {
+    .wallCol:nth-child(n + 3) { display: none; }
+    .finale__cta, .finale__alt { width: 100%; justify-content: center; }
+  }
+
+  /* The drift is decoration. Frozen, the wall is a still collage and the
+     section still reads exactly as intended. */
+  @media (prefers-reduced-motion: reduce) {
+    .wallCol, .finale__pulse, .finale__track { animation: none; }
+    .finale__track { transform: none; }
+  }
+</style>

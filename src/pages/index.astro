@@ -1,11 +1,23 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+import Hero from '../components/Hero.astro';
+import Programs from '../components/Programs.astro';
+import Coaches from '../components/Coaches.astro';
+import Alumni from '../components/Alumni.astro';
+import PhotoStrip from '../components/PhotoStrip.astro';
+import Signup from '../components/Signup.astro';
+import Finale from '../components/Finale.astro';
 ---
 
-<Layout>
-	<Welcome />
+<Layout
+  title="Revolt LC — Summer Travel & Indoor Lacrosse | Fort Wayne, IN"
+  description="Revolt Lacrosse Club runs summer travel leagues and off-season indoor tournaments for players chasing college lacrosse. Based in Fort Wayne, Indiana."
+>
+  <Hero />
+  <Programs />
+  <Coaches />
+  <Alumni />
+  <PhotoStrip />
+  <Signup />
+  <Finale />
 </Layout>

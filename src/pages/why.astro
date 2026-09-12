@@ -1,0 +1,404 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { Image } from 'astro:assets';
+import gloveTap from '../assets/glove-tap.jpg';
+import footTeam from '../assets/foot-team.jpg';
+
+/**
+ * WHY REVOLT
+ *
+ * The sell, built only out of things a parent can check. Every number on this
+ * page is derived from the data files rather than typed in — the head-coach
+ * count from coaches.ts, the commitments from alumni.ts, the tournament count
+ * from programs.ts — so the argument can't drift from the rest of the site.
+ *
+ * The tournament credentials quoted below come from each event's own listing
+ * (the `href` on every entry in programs.ts is the source). Nothing here is an
+ * estimate, and no claim is made about a player's outcome.
+ *
+ * College names in `body` are run through linkColleges(), the same treatment
+ * the programs cards use, so a school mentioned anywhere links to its program.
+ */
+import { coaches, currentPost } from '../data/coaches';
+import { totalTournaments, allStates } from '../data/programs';
+import { linkColleges } from '../data/colleges';
+
+/** Staff who currently hold a head-coaching post somewhere else. */
+const headCoaches = coaches.filter((c) => currentPost(c)?.title === 'Head Coach');
+const headPosts = headCoaches.map((c) => currentPost(c)!.org);
+
+/** Mitchell Wilkins' run at Indiana Tech, measured off his own record. */
+const owner = coaches.find((c) => c.role === 'Owner')!;
+const tech = owner.history.find((h) => h.org === 'Indiana Tech')!;
+const techYears = (tech.to ?? new Date().getFullYear()) - tech.from;
+
+/** "A, B and C" — used for the head-coaching posts. */
+const listOut = (xs: string[]) =>
+  xs.length < 2 ? (xs[0] ?? '') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`;
+
+const principles = [
+  {
+    n: '01',
+    sub: 'Not volunteers with a whistle',
+    title: 'The coaches run their own programs',
+    body:
+      `${headCoaches.length} of the ${coaches.length} coaches on this staff currently hold a head ` +
+      `coaching job of their own — ${listOut(headPosts)}. Mitchell Wilkins spent ${techYears} ` +
+      `seasons as offensive coordinator at Indiana Tech before taking over the program at ` +
+      `Edgewood University. The person coaching your player in July is running their own bench `
+      + `through the spring season — this is not summer-only help.`,
+  },
+  {
+    n: '02',
+    sub: 'Coaches on the sideline, film in your hands',
+    title: 'Every summer stop is a recruiting weekend',
+    body:
+      'All three summer tournaments were chosen for who works the sideline, not for who had ' +
+      'room. Pipe City is the largest single-site summer tournament in the country and puts ' +
+      '75+ college coaches on the grass. Saginaw includes high school game film at no cost ' +
+      'through Next Level Video. Chicago Showdown drew coaches from 16 programs in 2025 — ' +
+      'Marquette among them.',
+  },
+  {
+    n: '03',
+    sub: 'Box in January, field in June',
+    title: "The season doesn't end in July",
+    body:
+      'Most travel programs go quiet after the summer. Revolt puts a second roster on the ' +
+      'floor in January: box lacrosse, 6v6 inside a rink, where less space means faster hands ' +
+      'and far more touches per possession than the field game allows. Two tournaments, both ' +
+      'in Michigan, while everyone else waits for spring.',
+  },
+  {
+    n: '04',
+    sub: 'The same group, every weekend',
+    title: 'One roster, not a pickup team',
+    body:
+      'Each program is a single roster for its whole window. The same players take both ' +
+      `January tournaments, and the same players take all three summer stops across ` +
+      `${allStates}. Nobody is assembled the Thursday before a weekend and nobody is added ` +
+      'because a spot needed filling. A season run that way is long enough for a group of ' +
+      'players to actually turn into a team.',
+  },
+];
+
+/**
+ * The right-hand column is the verifiable half: every claim there is a number
+ * this site publishes elsewhere. The left is the category, not any one club.
+ */
+const contrasts = [
+  { them: 'Sideline help that changes every weekend', us: `${headCoaches.length} current head coaches` },
+  { them: 'Whatever tournament still has room',        us: `${totalTournaments} chosen for coach traffic` },
+  { them: 'Summer, then silence until spring',         us: 'January box + summer field' },
+  { them: '"Exposure," never defined',                 us: '75+ college coaches at one stop' },
+  { them: 'Alumni counted in the hundreds',            us: 'Every commitment listed by name' },
+];
+---
+
+<Layout
+  title="Why Revolt — Revolt Lacrosse Club"
+  description={`Why Revolt LC: ${headCoaches.length} current head coaches on staff, ${totalTournaments} tournaments chosen for college coach traffic across ${allStates}, and every college commitment listed by name.`}
+>
+  <!-- ═══ PAGE HEADER ═══════════════════════════════════════ -->
+  <section class="whyHero">
+    <div class="whyHero__media">
+      <Image
+        src={footTeam}
+        alt="The Revolt LC roster gathered together on the field"
+        widths={[640, 960, 1179]}
+        sizes="100vw"
+        quality={80}
+        loading="eager"
+      />
+      <div class="whyHero__scrim" aria-hidden="true"></div>
+    </div>
+    <div class="whyHero__bg" aria-hidden="true"></div>
+    <div class="shell whyHero__inner">
+      <div class="eyebrow">
+        <span class="label">[ Why Revolt ]</span>
+        <span class="eyebrow__rule"></span>
+      </div>
+
+      <h1 class="whyHero__title display">
+        There are a lot<br />
+        <span class="display--ghost">of travel teams.</span><br />
+        <span class="display--gold">Here's the difference.</span>
+      </h1>
+
+      <p class="lede whyHero__lede">
+        Two selected rosters out of Fort Wayne, coached by people who run college and
+        high school programs the rest of the year, at {totalTournaments} tournaments
+        picked for the coaches who work them. Everything below is verifiable — that's
+        the point.
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══ PRINCIPLES ════════════════════════════════════════ -->
+  <section class="section">
+    <div class="shell">
+      <div class="eyebrow reveal">
+        <span class="label">[ 001 ]</span>
+        <span class="eyebrow__rule"></span>
+        <span class="label label--dim">What we actually do</span>
+      </div>
+
+      <ol class="principles">
+        {principles.map((p) => (
+          <li class="principle reveal">
+            <span class="principle__n display">{p.n}</span>
+            <div class="principle__body">
+              <span class="label label--dim">{p.sub}</span>
+              <h2 class="principle__title display">{p.title}</h2>
+              <p class="principle__text" set:html={linkColleges(p.body)}></p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <!-- ═══ CONTRAST LEDGER ═══════════════════════════════════ -->
+  <section class="section">
+    <div class="shell">
+      <div class="eyebrow reveal">
+        <span class="label">[ 002 ]</span>
+        <span class="eyebrow__rule"></span>
+        <span class="label label--dim">The comparison</span>
+      </div>
+
+      <h2 class="display contrast__title reveal">
+        What you usually get<br /><span class="display--gold">vs. what you get here.</span>
+      </h2>
+
+      <!-- Photo carries the left rail so the ledger isn't four rows of type
+           alone on the page. Portrait crop, so it holds a tall column. -->
+      <div class="contrast__split reveal">
+        <figure class="contrast__shot">
+          <Image
+            src={gloveTap}
+            alt="Two Revolt LC players in black and gold pinnies tapping gloves on the field after a goal"
+            widths={[420, 640, 900]}
+            width={900}
+            height={1200}
+            sizes="(max-width: 900px) 100vw, 420px"
+            quality={80}
+            loading="lazy"
+          />
+          <div class="contrast__shotScrim" aria-hidden="true"></div>
+          <figcaption class="label label--dim">Revolt Lacrosse Club</figcaption>
+        </figure>
+
+        <div class="contrast">
+          <div class="contrast__heads">
+            <span class="label label--dim">Typical travel program</span>
+            <span class="label">Revolt LC</span>
+          </div>
+          {contrasts.map((c) => (
+            <div class="contrast__row">
+              <span class="contrast__them">{c.them}</span>
+              <span class="contrast__arrow" aria-hidden="true">→</span>
+              <span class="contrast__us">{c.us}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ CLOSING CTA ═══════════════════════════════════════ -->
+  <section class="section whyEnd">
+    <div class="shell whyEnd__inner reveal">
+      <h2 class="display whyEnd__title">Check it, then decide.</h2>
+      <p class="lede">
+        The coaches, the tournaments, and every college commitment are all right here
+        on the site. Take a look at who’s behind Revolt, where we compete, and what
+        we’re building for the next generation of college lacrosse players.
+      </p>
+      <div class="whyEnd__actions">
+        <a href="/signup" class="btn btn--gold"><span>Register</span><span class="btn__arrow">→</span></a>
+        <a href="/#coaches" class="btn"><span>Meet the staff</span><span class="btn__arrow">→</span></a>
+        <a href="/#alumni" class="btn"><span>View our alumni</span><span class="btn__arrow">→</span></a>
+      </div>
+      <p class="whyEnd__contact label label--dim">
+        <a class="clink" href="mailto:Mitchell.Wilkins@RevoltLC.com">Mitchell.Wilkins@RevoltLC.com</a>
+        <span aria-hidden="true"> / </span>(260) 417-5791
+      </p>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  /* --- Header --- */
+  .whyHero { position: relative; padding-block: clamp(4rem, 9vw, 7.5rem) clamp(2.5rem, 5vw, 4rem); overflow: hidden; }
+
+  /* The header already ends on a generous floor, so the full --section-y on
+     top of it left the [ 001 ] eyebrow stranded. Scoped to the first section
+     after the header; the rest of the page keeps the site's rhythm. */
+  .whyHero + .section { padding-top: clamp(3rem, 5vw, 4.5rem); }
+
+  /* --- Photographic ground -------------------------------------------
+     The same treatment the home hero gives its footage: the photo sits at
+     the back of the section, desaturated and darkened so the gold pinnies
+     stay the only chroma, under the hero's own two-axis scrim. The
+     vertical pass lands on --navy-deep so the band dissolves into the
+     principles below instead of ending on a seam. Every layer here is
+     background: the type sits above it on its own z-index. */
+  .whyHero__media {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    background: var(--navy-deep);
+  }
+  .whyHero__media :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Holds the row of players as the band crops taller or shorter. */
+    object-position: 50% 42%;
+    filter: saturate(0.72) contrast(1.08) brightness(0.74);
+  }
+
+  .whyHero__scrim {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(95deg, rgba(10, 15, 22, 0.74) 0%, rgba(10, 15, 22, 0.18) 52%, transparent 100%),
+      linear-gradient(
+        180deg,
+        rgba(10, 15, 22, 0.6) 0%,
+        rgba(10, 15, 22, 0.2) 18%,
+        rgba(10, 15, 22, 0.48) 48%,
+        rgba(10, 15, 22, 0.86) 78%,
+        var(--navy-deep) 100%
+      );
+  }
+
+  .whyHero__bg {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background:
+      radial-gradient(ellipse 65% 60% at 85% 10%, rgba(207, 174, 30, 0.12), transparent 70%),
+      repeating-linear-gradient(90deg, transparent 0 118px, rgba(232, 230, 225, 0.035) 118px 119px);
+    pointer-events: none;
+  }
+  .whyHero__inner { position: relative; z-index: 2; }
+  .whyHero__title { font-size: var(--fs-xl); margin-bottom: clamp(2rem, 4vw, 3rem); }
+  .whyHero__lede { font-size: clamp(1.1rem, 1.7vw, 1.45rem); }
+
+  /* --- Principles --- */
+  .principles { list-style: none; padding: 0; display: grid; gap: 0; }
+
+  .principle {
+    display: grid;
+    grid-template-columns: clamp(4rem, 10vw, 11rem) minmax(0, 1fr);
+    gap: clamp(1.5rem, 4vw, 4rem);
+    padding-block: clamp(2rem, 4vw, 3.25rem);
+    border-top: 1px solid rgba(90, 103, 113, 0.28);
+    transition: background 0.4s;
+  }
+  .principle:last-child { border-bottom: 1px solid rgba(90, 103, 113, 0.28); }
+  .principle:hover { background: linear-gradient(90deg, rgba(207, 174, 30, 0.05), transparent 65%); }
+
+  .principle__n {
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    color: transparent;
+    -webkit-text-stroke: 1.5px var(--slate);
+    line-height: 0.8;
+    transition: -webkit-text-stroke-color 0.4s, color 0.4s;
+  }
+  .principle:hover .principle__n { -webkit-text-stroke-color: var(--gold); }
+
+  .principle__title {
+    font-size: clamp(1.5rem, 3vw, 2.4rem);
+    margin-block: 0.4rem 0.85rem;
+  }
+  .principle__text { color: var(--bone-dim); max-width: 62ch; }
+
+  /* --- Contrast ledger --- */
+  .contrast__title { font-size: var(--fs-lg); margin-bottom: clamp(2.5rem, 5vw, 3.5rem); }
+
+  .contrast__split {
+    display: grid;
+    grid-template-columns: minmax(0, 0.5fr) minmax(0, 1fr);
+    gap: clamp(1.5rem, 4vw, 3rem);
+    align-items: start;
+  }
+
+  .contrast__shot {
+    position: relative;
+    margin: 0;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    border: 1px solid rgba(90, 103, 113, 0.28);
+    background: var(--navy-deep);
+  }
+  .contrast__shot :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 52% 38%;
+    /* Same recipe as the home hero — the pinnies stay the only chroma. */
+    filter: saturate(0.78) contrast(1.06) brightness(0.78);
+  }
+  .contrast__shotScrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(10, 15, 22, 0.88) 100%);
+  }
+  .contrast__shot figcaption {
+    position: absolute;
+    left: 1rem;
+    bottom: 0.9rem;
+    font-size: 0.58rem;
+    letter-spacing: 0.26em;
+  }
+
+  .contrast { border: 1px solid rgba(90, 103, 113, 0.28); }
+  .contrast__heads,
+  .contrast__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 3rem minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(0.75rem, 2vw, 2rem);
+    padding: clamp(1rem, 2vw, 1.4rem) clamp(1.25rem, 3vw, 2.25rem);
+  }
+  .contrast__heads {
+    border-bottom: 1px solid rgba(90, 103, 113, 0.28);
+    background: var(--navy-lift);
+  }
+  .contrast__heads span:last-child { grid-column: 3; }
+
+  .contrast__row + .contrast__row { border-top: 1px solid rgba(90, 103, 113, 0.18); }
+  .contrast__them { color: var(--slate); text-decoration: line-through; text-decoration-color: rgba(90, 103, 113, 0.55); }
+  .contrast__arrow { color: var(--gold); text-align: center; font-family: var(--font-mono); }
+  .contrast__us {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    font-size: clamp(1.05rem, 2vw, 1.5rem);
+    transform: skewX(var(--lean));
+    transform-origin: left bottom;
+  }
+
+  /* --- Closing --- */
+  .whyEnd__inner { display: grid; gap: 1.5rem; justify-items: start; }
+  .whyEnd__title { font-size: var(--fs-xl); }
+  .whyEnd__actions { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.75rem; }
+  .whyEnd__contact { font-size: 0.66rem; margin-top: 1.25rem; line-height: 1.9; }
+
+  @media (max-width: 900px) {
+    .contrast__split { grid-template-columns: 1fr; }
+    /* Full width, a portrait crop would push the ledger off the screen. */
+    .contrast__shot { aspect-ratio: 16 / 9; }
+  }
+
+  @media (max-width: 700px) {
+    .principle { grid-template-columns: 1fr; gap: 0.75rem; }
+    .contrast__heads, .contrast__row { grid-template-columns: 1fr; }
+    .contrast__heads span:last-child { grid-column: 1; }
+    .contrast__arrow { display: none; }
+    .contrast__row { gap: 0.35rem; }
+  }
+</style>

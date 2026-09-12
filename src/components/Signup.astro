@@ -1,0 +1,423 @@
+---
+/**
+ * EMAIL SIGN-UP
+ *
+ * Submissions go to Web3Forms, which emails them to the address this access
+ * key is registered to. The key is a public form identifier, not a secret —
+ * it ships in the page source by design. This is a SEPARATE key from the one
+ * on the registration page (src/pages/signup.astro), so list sign-ups and
+ * roster registrations stay in different inboxes.
+ */
+import { Image } from 'astro:assets';
+import teamPhoto from '../assets/join-team.jpg';
+
+const ENDPOINT = 'https://api.web3forms.com/submit';
+const ACCESS_KEY = '99fee3eb-8309-4f7a-a615-e41a5a3af1f0';
+
+const interests = [
+  { id: 'summer', label: 'Summer travel' },
+  { id: 'box',    label: 'Box travel' },
+  { id: 'schedule', label: 'Practice schedule' },
+];
+---
+
+<section class="section join" id="join">
+  <div class="shell">
+    <div class="join__panel reveal">
+      <!-- Photographic ground, same recipe as the hero and the facts rail.
+           It sits behind BOTH columns: the inputs carry their own solid
+           navy-deep fill, so the form stays legible over it. -->
+      <div class="join__media">
+        <Image
+          src={teamPhoto}
+          alt="The Revolt LC roster in gold pinnies, gathered on the field for a team photo"
+          widths={[640, 960, 1280, 1600]}
+          sizes="(max-width: 1200px) 100vw, 1160px"
+          quality={80}
+          loading="lazy"
+        />
+        <div class="join__scrim" aria-hidden="true"></div>
+        <div class="join__lines" aria-hidden="true"></div>
+      </div>
+
+      <div class="join__copy">
+        <div class="eyebrow">
+          <span class="label">[ 005 ]</span>
+          <span class="eyebrow__rule"></span>
+          <span class="label label--dim">Stay in the loop</span>
+        </div>
+
+        <h2 class="display join__title">
+          Rosters fill <span class="display--gold">fast.</span><br />
+          <span class="join__ask">What do you need to know?</span>
+        </h2>
+
+        <p class="lede">
+          Fill in the form and hit send. When practices start, what a season actually costs,
+          whether your player is a fit — ask it and we'll come back to you, usually
+          the same day.
+        </p>
+
+        <ul class="join__perks">
+          <li>Practice and roster announcements</li>
+          <li>Schedule drops for both seasons</li>
+          <li>College exposure event notices</li>
+        </ul>
+
+        <p class="join__now">
+          Already decided?
+          <a href="/signup" class="join__nowLink">
+            Register for a roster<span class="btn__arrow" aria-hidden="true">→</span>
+          </a>
+        </p>
+      </div>
+
+      <form class="join__form" id="signup-form" novalidate data-endpoint={ENDPOINT}>
+        <input type="hidden" name="access_key" value={ACCESS_KEY} />
+        <input type="hidden" name="from_name" value="Revolt LC website" />
+        <!-- Web3Forms' honeypot: a real person never checks a hidden box. -->
+        <input type="checkbox" name="botcheck" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+        <div class="field">
+          <label for="su-name" class="label label--dim">Player / parent name</label>
+          <input id="su-name" name="name" type="text" autocomplete="name" required placeholder="Jordan Rivera" />
+        </div>
+
+        <div class="field">
+          <label for="su-email" class="label label--dim">Email address</label>
+          <input id="su-email" name="email" type="email" autocomplete="email" required placeholder="you@example.com" />
+          <p class="field__err" data-for="su-email" hidden>Enter a valid email address.</p>
+        </div>
+
+        <div class="field">
+          <label for="su-grad" class="label label--dim">Graduation year</label>
+          <select id="su-grad" name="grad">
+            <option value="">Select…</option>
+            {['2027', '2028', '2029', '2030', '2031', 'Other'].map((y) => <option value={y}>{y}</option>)}
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="su-q" class="label label--dim">Your question <span class="field__opt">(optional)</span></label>
+          <textarea id="su-q" name="question" rows="4"
+            placeholder="e.g. When do practices start for summer league, and what does a season cost?"></textarea>
+        </div>
+
+        <fieldset class="field field--set">
+          <legend class="label label--dim">Interested in</legend>
+          <div class="join__checks">
+            {interests.map((i) => (
+              <label class="check">
+                <input type="checkbox" name="interest" value={i.id} />
+                <span class="check__box" aria-hidden="true"></span>
+                <span class="check__label">{i.label}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        <button type="submit" class="btn btn--gold join__submit">
+          <span>Send it</span><span class="btn__arrow">→</span>
+        </button>
+
+        <p class="join__fine label label--dim">
+          We'll only email about Revolt programs. Unsubscribe anytime.
+        </p>
+
+        <p class="join__err" id="join-error" hidden role="alert">
+          <b>That didn't send.</b> <span id="join-error-detail"></span>
+          Try again, or email
+          <a class="clink" href="mailto:Mitchell.Wilkins@RevoltLC.com">Mitchell.Wilkins@RevoltLC.com</a>.
+        </p>
+
+        <div class="join__done" hidden role="status">
+          <span class="join__doneMark display">✓</span>
+          <p><strong>Got it.</strong> You're on the list — and if you asked a question, you'll get an answer by email.</p>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<style>
+  .join__panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+    gap: clamp(2.5rem, 6vw, 6rem);
+    border: 1px solid rgba(90, 103, 113, 0.3);
+    background: var(--navy-lift);
+    padding: clamp(2rem, 5vw, 4.5rem);
+    /* Own stacking context so the media can sit at -1: above this
+       background, below the copy and the form. */
+    position: relative;
+    isolation: isolate;
+  }
+
+  /* --- Photographic ground -------------------------------------------
+     Same treatment as the hero: desaturated and darkened so the gold
+     pinnies stay the only chroma, a two-axis scrim buys the type its
+     contrast, and the field-line motif sits on top so it reads as brand. */
+  .join__media {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    background: var(--navy-deep);
+  }
+  .join__media :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Centres the two rows of players and crops off the blown-out sky. */
+    object-position: 50% 48%;
+    filter: saturate(0.72) contrast(1.08) brightness(0.74);
+  }
+
+  /* Heaviest at the two vertical edges, where the headline and the form
+     sit — the team reads through the middle. The gold glow that used to
+     be the panel's own background rides on top so it isn't lost. */
+  .join__scrim {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 80% at 0% 0%, rgba(207, 174, 30, 0.10), transparent 65%),
+      linear-gradient(95deg, rgba(10, 15, 22, 0.88) 0%, rgba(10, 15, 22, 0.45) 48%, rgba(10, 15, 22, 0.86) 100%),
+      linear-gradient(180deg, rgba(10, 15, 22, 0.62) 0%, rgba(10, 15, 22, 0.38) 42%, rgba(10, 15, 22, 0.82) 100%);
+  }
+
+  .join__lines {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(90deg, transparent 0 118px, rgba(232, 230, 225, 0.035) 118px 119px);
+    pointer-events: none;
+  }
+
+  .join__title { font-size: var(--fs-lg); margin-bottom: 1.5rem; }
+
+  .join__perks {
+    list-style: none;
+    padding: 0;
+    margin-top: 2rem;
+    display: grid;
+    gap: 0.75rem;
+  }
+  .join__perks li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--bone-dim);
+  }
+  .join__perks li::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--gold);
+    flex-shrink: 0;
+    transform: translateY(-1px);
+  }
+
+  /* Escape hatch to the real registration form, for anyone past the
+     mailing-list stage. Rule above it so it reads as a separate offer. */
+  .join__now {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(90, 103, 113, 0.28);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--bone-dim);
+  }
+  .join__nowLink {
+    color: var(--gold);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-left: 0.35rem;
+    border-bottom: 1px solid rgba(207, 174, 30, 0.4);
+    transition: color 0.25s, border-color 0.25s;
+  }
+  .join__nowLink:hover { color: var(--gold-hot); border-color: var(--gold-hot); }
+  .join__nowLink .btn__arrow { transition: transform 0.3s; }
+  .join__nowLink:hover .btn__arrow { transform: translateX(3px); }
+
+  /* --- Form --- */
+  .join__form { display: grid; gap: 1.35rem; align-content: start; }
+  .join__form.is-done > *:not(.join__done) { display: none; }
+
+  .field { display: grid; gap: 0.5rem; }
+  .field--set { border: 0; padding: 0; margin: 0; }
+
+  input[type='text'],
+  input[type='email'],
+  select {
+    width: 100%;
+    background: var(--navy-deep);
+    border: 1px solid rgba(90, 103, 113, 0.45);
+    color: var(--bone);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    padding: 0.85rem 1rem;
+    transition: border-color 0.3s, background 0.3s;
+  }
+  input::placeholder { color: rgba(154, 163, 172, 0.5); }
+  input:focus, select:focus { border-color: var(--gold); outline: none; }
+  input[aria-invalid='true'] { border-color: #C9503A; }
+
+  .field__err { color: #E27A66; font-size: 0.8rem; font-family: var(--font-mono); }
+
+  /* Custom checkboxes */
+  .join__checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; margin-top: 0.6rem; }
+  .check { display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-size: 0.88rem; }
+  .check input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .check__box {
+    width: 17px;
+    height: 17px;
+    border: 1px solid rgba(90, 103, 113, 0.6);
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    transition: background 0.25s, border-color 0.25s;
+  }
+  .check__box::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: var(--navy-deep);
+    transform: scale(0);
+    transition: transform 0.25s cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  .check input:checked + .check__box { background: var(--gold); border-color: var(--gold); }
+  .check input:checked + .check__box::after { transform: scale(1); }
+  .check input:focus-visible + .check__box { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .check__label { color: var(--bone-dim); }
+  .check:hover .check__label { color: var(--bone); }
+
+  .hp { position: absolute; left: -9999px; opacity: 0; width: 0; height: 0; }
+
+  /* Sits a step under "fast." so the question reads as the section's point
+     without out-shouting the line that gets someone to stop scrolling. */
+  .join__ask { font-size: 0.62em; color: var(--bone-dim); }
+
+  .field__opt { color: var(--slate); letter-spacing: 0.12em; }
+  textarea {
+    width: 100%;
+    background: var(--navy-deep);
+    border: 1px solid rgba(90, 103, 113, 0.45);
+    color: var(--bone);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    padding: 0.85rem 1rem;
+    resize: vertical;
+    transition: border-color 0.3s;
+  }
+  textarea::placeholder { color: rgba(154, 163, 172, 0.5); }
+  textarea:focus { border-color: var(--gold); outline: none; }
+
+  .join__submit { justify-self: start; margin-top: 0.4rem; }
+  .join__submit:disabled { opacity: 0.6; cursor: wait; }
+  .join__err {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1.7;
+    color: #E27A66;
+    border-left: 2px solid #C9503A;
+    padding-left: 0.85rem;
+  }
+  .join__err[hidden] { display: none; }
+  .join__err b { color: var(--bone); font-weight: 500; }
+  .join__fine { font-size: 0.62rem; line-height: 1.6; }
+
+  /* Success state */
+  .join__done { display: grid; gap: 0.6rem; place-items: start; padding-block: 1rem; }
+  .join__done[hidden] { display: none; }
+  .join__doneMark { font-size: 3rem; color: var(--gold); }
+  .join__doneNote { font-size: 0.6rem; }
+
+  @media (max-width: 860px) {
+    .join__panel { grid-template-columns: 1fr; }
+    /* Stacked, the form sits in the lower half rather than the right —
+       so the weight moves off the side edges and onto the bottom. */
+    .join__scrim {
+      background:
+        radial-gradient(ellipse 70% 50% at 0% 0%, rgba(207, 174, 30, 0.10), transparent 65%),
+        linear-gradient(180deg, rgba(10, 15, 22, 0.74) 0%, rgba(10, 15, 22, 0.58) 26%, rgba(10, 15, 22, 0.9) 62%);
+    }
+  }
+  @media (max-width: 420px) {
+    .join__checks { grid-template-columns: 1fr; }
+  }
+</style>
+
+<script>
+  const form = document.getElementById('signup-form') as HTMLFormElement | null;
+  const errBox = document.getElementById('join-error');
+  const errDetail = document.getElementById('join-error-detail');
+  const submitBtn = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
+  const submitLabel = submitBtn?.querySelector('span');
+
+  /** Locks the button while the request is in flight, so nothing double-sends. */
+  const setBusy = (busy: boolean) => {
+    if (!submitBtn) return;
+    submitBtn.disabled = busy;
+    if (submitLabel) submitLabel.textContent = busy ? 'Sending…' : 'Send it';
+  };
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const email = form.querySelector<HTMLInputElement>('#su-email');
+    const err = form.querySelector<HTMLElement>('[data-for="su-email"]');
+    const valid = !!email?.value && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value);
+
+    email?.setAttribute('aria-invalid', String(!valid));
+    if (err) err.hidden = valid;
+    if (!valid) { email?.focus(); return; }
+
+    const endpoint = form.dataset.endpoint;
+    if (!endpoint) return;
+
+    const fd = new FormData(form);
+    const data = Object.fromEntries(fd) as Record<string, string>;
+
+    // The three interest boxes share one name, and fromEntries keeps only the
+    // last — collapse them into a single readable line instead.
+    const picked = fd.getAll('interest').map(String);
+    data.interest = picked.length ? picked.join(', ') : 'Not specified';
+
+    // A question needs answering; a bare sign-up doesn't. Say which in the
+    // subject so the two don't sit in one undifferentiated inbox.
+    const asked = (data.question ?? '').trim();
+    data.question = asked || 'None';
+    data.subject = asked
+      ? `Revolt LC — QUESTION from ${data.name || 'website visitor'}`
+      : 'Revolt LC — new mailing list sign-up';
+
+    setBusy(true);
+    if (errBox) errBox.hidden = true;
+
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const body = await res.json().catch(() => ({} as { message?: string; success?: boolean }));
+      if (!res.ok || body.success === false) throw new Error(body.message ?? `Error ${res.status}`);
+    } catch (e2) {
+      // Never show the success state on a failure — the parent would think
+      // they were on the list when nothing reached the club.
+      setBusy(false);
+      if (errDetail) errDetail.textContent = e2 instanceof Error ? e2.message : '';
+      if (errBox) {
+        errBox.hidden = false;
+        errBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
+
+    const done = form.querySelector<HTMLElement>('.join__done');
+    form.classList.add('is-done');
+    if (done) done.hidden = false;
+  });
+</script>

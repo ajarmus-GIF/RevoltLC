@@ -1,0 +1,31 @@
+---
+/**
+ * Renders a college name as a link to its official page when the registry
+ * has one, and as plain text when it doesn't — so adding a URL in
+ * `src/data/colleges.ts` is the only step needed to light a mention up.
+ *
+ * Non-college orgs (high schools on a coach's résumé) pass through
+ * untouched: they simply aren't in the registry.
+ */
+import { collegeHref } from '../data/colleges';
+
+interface Props {
+  /** The school name, exactly as stored in the data file. */
+  name: string;
+  /** Extra classes for the call site's own layout. */
+  class?: string;
+}
+
+const { name, class: cls } = Astro.props;
+const href = collegeHref(name);
+
+// Capitalised so Astro treats it as a dynamic tag rather than a literal.
+const Tag = href ? 'a' : 'span';
+const linkAttrs = href ? { href, target: '_blank', rel: 'noopener' } : {};
+
+// The slot falls back to `name`, so `<CollegeLink name={x} />` prints the
+// school on its own. Pass children only to wrap richer markup — the way
+// the alumni board wraps its split-flap characters.
+---
+
+<Tag class:list={[href && 'clink', cls]} {...linkAttrs}><slot>{name}</slot></Tag>

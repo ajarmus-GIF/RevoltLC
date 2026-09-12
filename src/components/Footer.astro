@@ -1,0 +1,175 @@
+---
+import { Image, getImage } from 'astro:assets';
+import { programs } from '../data/programs';
+import lockup from '../assets/revolt-lockup.png';
+import team from '../assets/foot-team.jpg';
+
+const year = new Date().getFullYear();
+
+/**
+ * The closing REVOLT is cut out of this team photo — the letters are the
+ * window, the photo shows through them. getImage() rather than <Image>
+ * because it goes in as a CSS background, which needs a plain URL.
+ */
+const fill = await getImage({ src: team, width: 1400, format: 'webp', quality: 78 });
+---
+
+<footer class="foot">
+  <div class="shell">
+    <!-- Oversized wordmark as the closing gesture: the roster, seen through
+         the letters. -->
+    <div class="foot__mark" aria-hidden="true">
+      <span class="display foot__markFill" style={`background-image: url(${fill.src})`}>Revolt</span>
+    </div>
+
+    <div class="foot__cols">
+      <div class="foot__col">
+        <span class="label label--dim">Contact</span>
+        <a href="mailto:Mitchell.Wilkins@RevoltLC.com">Mitchell.Wilkins@RevoltLC.com</a>
+        <a href="tel:+12604175791">(260) 417-5791</a>
+      </div>
+
+      <div class="foot__col">
+        <span class="label label--dim">Programs</span>
+        {programs.map((p) => <a href={`/#${p.id}`}>{p.name}</a>)}
+      </div>
+
+      <div class="foot__col">
+        <span class="label label--dim">Club</span>
+        <a href="/signup">Register</a>
+        <a href="/why">Why Revolt</a>
+        <a href="/#coaches">Coaching Staff</a>
+        <a href="/#alumni">College Commitments</a>
+        <a href="/gallery">Photo Gallery</a>
+      </div>
+
+      <div class="foot__col">
+        <span class="label label--dim">Based</span>
+        <p>Fort Wayne, Indiana</p>
+        <p class="foot__dim">Van Hoozen Park</p>
+      </div>
+    </div>
+
+    <div class="foot__bar">
+      <span class="label label--dim">© {year} Revolt Lacrosse Club</span>
+
+      <!-- The club mark, centred between the two lines of fine print. The
+           outlined REVOLT at the top of the footer is a typographic gesture;
+           this is the actual lockup. -->
+      <a href="/" class="foot__sign" aria-label="Revolt Lacrosse Club — home">
+        <Image
+          src={lockup}
+          alt=""
+          widths={[100, 160, 220]}
+          sizes="100px"
+          quality={90}
+          loading="lazy"
+        />
+      </a>
+
+      <span class="label foot__tag">Revolt builds players’ futures</span>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .foot {
+    border-top: 1px solid rgba(90, 103, 113, 0.28);
+    padding-top: clamp(3rem, 6vw, 5rem);
+    overflow: hidden;
+  }
+
+  .foot__mark {
+    font-size: clamp(5rem, 21vw, 19rem);
+    line-height: 0.75;
+    margin-bottom: clamp(2rem, 5vw, 4rem);
+    user-select: none;
+  }
+
+  /* The photo is painted as this element's background and then clipped to the
+     glyphs, so the letters read as a cut-out onto the team shot. The stroke
+     stays, faintly, to hold the letterforms where the photo goes dark. */
+  .foot__markFill {
+    display: inline-block;
+    /* Promotes the glyphs to their own layer. Without it Firefox can paint the
+       background unclipped when the stylesheet arrives after first paint,
+       which is exactly what the dev server does. */
+    will-change: transform;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: 50% 42%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    -webkit-text-stroke: 1.5px rgba(90, 103, 113, 0.32);
+    paint-order: stroke fill;
+  }
+
+  .foot__cols {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(1.5rem, 4vw, 3rem);
+    padding-bottom: clamp(2.5rem, 5vw, 4rem);
+  }
+  .foot__col { display: grid; gap: 0.6rem; align-content: start; min-width: 0; }
+  .foot__col a,
+  .foot__col p {
+    font-size: 0.9rem;
+    color: var(--bone-dim);
+    transition: color 0.3s;
+    /* The contact address is one 29-character word. Without this it sets the
+       column's min-content width and spills over the column beside it. */
+    overflow-wrap: anywhere;
+  }
+  .foot__col a:hover { color: var(--gold); }
+  .foot__dim { color: var(--slate) !important; }
+
+  .foot__tag { color: var(--gold); }
+
+  .foot__bar {
+    display: grid;
+    /* 1fr | auto | 1fr keeps the mark centred on the page, not centred on
+       whatever is left over between two labels of different lengths. */
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 1rem 1.5rem;
+    padding-block: 1.25rem;
+    border-top: 1px solid rgba(90, 103, 113, 0.2);
+  }
+  .foot__tag { justify-self: end; text-align: right; }
+
+  .foot__sign { display: block; line-height: 0; }
+  /* :global because <Image> renders its own <img>, which doesn't pick up this
+     component's scope attribute — the same reason the hero styles its media
+     this way. */
+  .foot__sign :global(img) {
+    /* Small enough that the bar stays one tidy line with the fine print
+       either side of it, rather than a band the mark sets the height of. */
+    width: clamp(78px, 8.5vw, 100px);
+    height: auto;
+    /* The lockup's navy body all but disappears on this ground, which is the
+       point — the gold carries it. Held back a touch so it reads as a mark
+       rather than competing with the gold in the bar above. */
+    opacity: 0.82;
+    transition: opacity 0.35s ease;
+  }
+  .foot__sign:hover :global(img) { opacity: 1; }
+
+  @media (max-width: 780px) {
+    .foot__cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    /* Two columns leave ~160px each on a phone — not enough for the address
+       to sit on one line, so they stack. */
+    @media (max-width: 560px) {
+      .foot__cols { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
+    }
+    /* Three across doesn't fit — they stack, keeping the same order. */
+    .foot__bar {
+      grid-template-columns: 1fr;
+      justify-items: center;
+      gap: 1.25rem;
+      text-align: center;
+    }
+    .foot__tag { justify-self: center; text-align: center; }
+  }
+</style>

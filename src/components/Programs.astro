@@ -1,0 +1,1158 @@
+---
+import { Image } from 'astro:assets';
+import factsField from '../assets/facts-field.jpg';
+import {
+  programs, seasons, specsFor, citiesFor,
+  totalTournaments, allStates,
+  MONTHS_FULL,
+} from '../data/programs';
+import { linkColleges } from '../data/colleges';
+---
+
+<!--
+  ONE section (#programs), read in four segments:
+    SEGMENT A — Header: what the club runs and why it's year-round
+    SEGMENT B — Season Windows: the three months the club actually competes
+    SEGMENT C — Program cards: the featured one leads, the rest follow
+    SEGMENT D — The 2027 schedule: five tickets, filterable, exportable
+-->
+<section class="section programs" id="programs">
+  <div class="shell">
+
+    <!-- ═══ SEGMENT A — HEADER ═══════════════════════════════ -->
+    <header class="prog-head reveal">
+      <div class="eyebrow">
+        <span class="label">[ 001 ]</span>
+        <span class="eyebrow__rule"></span>
+        <span class="label label--dim">Teams &amp; Leagues</span>
+      </div>
+
+      <h2 class="prog-head__title display">
+        Two seasons.<br />
+        <span class="display--gold">One standard.</span>
+      </h2>
+
+      <div class="prog-head__deck">
+        <p class="lede">
+          Revolt runs a field roster through the summer and a box roster through the
+          winter, so a player who wants to keep getting better never has an off-season
+          to sit through. Two rosters, five tournaments, one standard of coaching.
+        </p>
+        <div class="facts">
+          <!-- Photographic ground, same recipe as the hero. Decorative: the
+               facts themselves carry the meaning, so the image is alt="". -->
+          <div class="facts__media" aria-hidden="true">
+            <Image
+              src={factsField}
+              alt=""
+              widths={[560, 840, 1120]}
+              sizes="(max-width: 780px) 100vw, 560px"
+              quality={80}
+              loading="lazy"
+            />
+            <div class="facts__scrim"></div>
+            <div class="facts__lines"></div>
+          </div>
+
+          <dl class="prog-head__facts">
+            <div><dt class="label label--dim">Based</dt><dd>Fort Wayne, IN</dd></div>
+            <div><dt class="label label--dim">Active</dt><dd>All Offseason</dd></div>
+            <div><dt class="label label--dim">Current program plan</dt><dd>{String(programs.length).padStart(2, '0')}</dd></div>
+          </dl>
+        </div>
+      </div>
+    </header>
+
+    <!-- ═══ SEGMENT B — THE SEASON WINDOWS ═══════════════════ -->
+    <!--
+      Not a 12-month gantt. The club competes in three months, so the
+      graphic only draws three: each window is sized by how many months
+      it takes up (`--span`), which is why summer renders twice as wide
+      as January. The months in between aren't dead space on the page —
+      they're simply not part of the picture.
+    -->
+    <div class="windows reveal">
+      <div class="windows__head">
+        <span class="label label--dim">The calendar</span>
+        <span class="windows__hint">
+          Two windows · three months · {totalTournaments} tournament weekends
+        </span>
+      </div>
+
+      <div class="windows__grid">
+        {programs.map((p) => (
+          <article
+            class:list={['win', p.featured && 'is-featured']}
+            style={`--span:${p.months.length}`}
+          >
+            <span class="win__season label">{seasons[p.season].label}</span>
+
+            <!-- A run of months reads as a range: 'Jun–Jul', not 'Jun Jul'. -->
+            <h3 class="win__months display">
+              {p.months.length > 1
+                ? `${MONTHS_FULL[p.months[0] - 1]}–${MONTHS_FULL[p.months.at(-1)! - 1]}`
+                : MONTHS_FULL[p.months[0] - 1]}
+            </h3>
+
+            <p class="win__name">
+              <span class="win__idx">{p.index}</span>{p.name}
+            </p>
+
+            <ol class="win__weeks" aria-label={`${p.name} tournament weekends`}>
+              {p.tournaments.map((t) => (
+                <li class="win__week">
+                  <span class="win__date">{t.month} {t.days}</span>
+                  <span class="win__city">{t.city}</span>
+                </li>
+              ))}
+            </ol>
+          </article>
+        ))}
+      </div>
+    </div>
+
+    <!-- ═══ SEGMENT C — PROGRAM CARDS ════════════════════════ -->
+    <div class="prog-grid">
+
+      {programs.map((p) => (p.featured ? (
+        <article class="pcard pcard--featured reveal" id={p.id}>
+          <span class="pcard__flag label">Primary program</span>
+
+          <div class="pcard__body">
+            <div class="pcard__lead">
+              <span class="pcard__index display">{p.index}</span>
+              <div>
+                <span class="label label--dim">{p.window}</span>
+                <h3 class="pcard__name display">{p.name}</h3>
+                <p class="pcard__format">{p.format}</p>
+              </div>
+            </div>
+
+            <p class="pcard__blurb" set:html={linkColleges(p.blurb)}></p>
+          </div>
+
+          <div class="pcard__side">
+            <dl class="pcard__specs">
+              {specsFor(p).map((sp) => (
+                <div class="pcard__spec">
+                  <dt class="label label--dim">{sp.k}</dt>
+                  <dd>{sp.v}</dd>
+                </div>
+              ))}
+            </dl>
+            <a href={p.href} class="btn btn--gold pcard__cta">
+              <span>{p.cta}</span>
+              <span class="btn__arrow">→</span>
+            </a>
+          </div>
+        </article>
+      ) : (
+        <article class="pcard reveal" id={p.id}>
+          <div class="pcard__lead">
+            <span class="pcard__index display">{p.index}</span>
+            <div>
+              <span class="label label--dim">{p.window}</span>
+              <h3 class="pcard__name display">{p.name}</h3>
+              <p class="pcard__format">{p.format}</p>
+            </div>
+          </div>
+
+          <p class="pcard__blurb" set:html={linkColleges(p.blurb)}></p>
+
+          <dl class="pcard__specs pcard__specs--inline">
+            {specsFor(p).map((sp) => (
+              <div class="pcard__spec">
+                <dt class="label label--dim">{sp.k}</dt>
+                <dd>{sp.v}</dd>
+              </div>
+            ))}
+          </dl>
+
+          <a href={p.href} class="btn pcard__cta">
+            <span>{p.cta}</span>
+            <span class="btn__arrow">→</span>
+          </a>
+        </article>
+      )))}
+    </div>
+
+    <!-- ═══ SEGMENT D — THE 2027 SCHEDULE ════════════════════ -->
+    <!--
+      Five stops, and every one of them is a drive. So each is a ticket: the
+      stub carries the event's own mark and its dates, punched away from the
+      body along a perforated rule. Chronological, because a schedule is the
+      one place numbering is honest — the order IS the information.
+
+      Function, not decoration: filter to the roster you care about, and take
+      the dates with you as a real .ics file. Both work on top of the rendered
+      list, so with JavaScript off every stop is still readable.
+    -->
+    <div class="sched reveal">
+      <div class="sched__head">
+        <div>
+          <h3 class="sched__title display">The 2027 schedule</h3>
+          <p class="sched__sub">
+            {totalTournaments} weekends across {allStates.replace(' · ', ' and ')}.
+          </p>
+        </div>
+
+        <div class="sched__tools">
+          <div class="segmented" role="group" aria-label="Filter the schedule by roster">
+            <button type="button" class="segmented__btn is-on" data-filter="all" aria-pressed="true">
+              Both rosters <span class="segmented__n">{totalTournaments}</span>
+            </button>
+            {programs.map((p) => (
+              <button type="button" class="segmented__btn" data-filter={p.id} aria-pressed="false">
+                {p.season === 'INDOOR' ? 'Box' : 'Summer'}
+                <span class="segmented__n">{p.tournaments.length}</span>
+              </button>
+            ))}
+          </div>
+
+          <button type="button" class="sched__export" data-export="all">
+            Add the season to your calendar
+          </button>
+        </div>
+      </div>
+
+      <p class="sched__empty" hidden role="status"></p>
+
+      {programs.map((p) => (
+        <section class="leg" data-leg={p.id} aria-label={`${p.name} schedule`}>
+          <h4 class="leg__head">
+            <span class="leg__season" style={`--c:${seasons[p.season].color}`}>
+              {seasons[p.season].label}
+            </span>
+            <span class="leg__team">{p.name}</span>
+            <span class="leg__window">{p.window}</span>
+          </h4>
+
+          <ol class="leg__list">
+            {p.tournaments.map((t) => (
+              <li
+                class="tkt"
+                data-leg={p.id}
+                data-name={t.name}
+                data-start={t.start}
+                data-end={t.end}
+                data-loc={`${t.venue}, ${t.city}`}
+                data-url={t.href}
+              >
+                <div class="tkt__stub">
+                  {/* alt="" — the event name sits beside this as a real link,
+                      so announcing the logo would only repeat it. */}
+                  <Image class="tkt__logo" src={t.logo} alt="" widths={[120, 240, 360]} sizes="120px" loading="lazy" />
+                  <span class="tkt__month">{t.month}</span>
+                  <span class="tkt__days display">{t.days}</span>
+                </div>
+
+                <div class="tkt__body">
+                  <h5 class="tkt__name display">
+                    <a href={t.href} target="_blank" rel="noopener noreferrer">{t.name}</a>
+                  </h5>
+                  <p class="tkt__where">{t.venue}, {t.city}</p>
+                  <p class="tkt__pitch" set:html={linkColleges(t.pitch)}></p>
+
+                  <ul class="tkt__facts">
+                    {t.facts.map((f) => <li>{f}</li>)}
+                  </ul>
+
+                  <div class="tkt__actions">
+                    <a class="tkt__link" href={t.href} target="_blank" rel="noopener noreferrer">
+                      Event site
+                    </a>
+                    <button type="button" class="tkt__cal" data-export="one">
+                      Add to calendar
+                    </button>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))}
+    </div>
+
+    <!-- ═══ SEGMENT E — CHOOSE A SEASON ══════════════════════ -->
+    <div class="pick reveal">
+      <div class="pick__head">
+        <h3 class="pick__title display">
+          Run one season.<br /><span class="display--gold">Or run the year.</span>
+        </h3>
+        <p class="pick__sub">
+          Sign up for both and save. Box in January, field in June and July,
+          five tournaments, one discounted rate.
+        </p>
+      </div>
+
+      <div class="pick__grid">
+        <div class="pick__singles">
+          {programs.map((p) => (
+            <article class="opt">
+              <span class="opt__idx display">{p.index}</span>
+              <div>
+                <h4 class="opt__name display">{p.name}</h4>
+                <span class="opt__meta label label--dim">
+                  {p.window} · {String(p.tournaments.length).padStart(2, '0')} tournaments
+                </span>
+                <p class="opt__where">{citiesFor(p)}</p>
+              </div>
+              {/* No destination yet — swap <button> for <a href> once registration is live. */}
+              <button type="button" class="btn opt__cta">
+                <span>Sign up for {p.season === 'INDOOR' ? 'box' : 'summer'}</span>
+                <span class="btn__arrow">→</span>
+              </button>
+            </article>
+          ))}
+        </div>
+
+        <article class="opt opt--both">
+          <span class="opt__flag label">Best value</span>
+          <h4 class="opt__title display">Both<br />seasons</h4>
+          <p class="opt__copy">
+            Box in January, field in June and July. {totalTournaments} tournaments, one
+            roster spot, and a discounted rate for running the full year.
+          </p>
+          <ul class="opt__facts">
+            <li>Jan — Jul 2027</li>
+            <li>{allStates}</li>
+            <li>Both rosters</li>
+          </ul>
+          {/* No destination yet — swap <button> for <a href> once registration is live. */}
+          <button type="button" class="btn opt__cta">
+            <span>Sign up for both and save</span>
+            <span class="btn__arrow">→</span>
+          </button>
+        </article>
+      </div>
+
+      <p class="pick__foot">Questions on either roster — <a href="mailto:Mitchell.Wilkins@RevoltLC.com">Mitchell.Wilkins@RevoltLC.com</a> · (260) 417-5791</p>
+    </div>
+
+  </div>
+</section>
+
+<style>
+  /* ── SEGMENT A ─────────────────────────────────────────── */
+  .prog-head__title {
+    font-size: var(--fs-xl);
+    margin-bottom: clamp(2rem, 4vw, 3rem);
+  }
+
+  .prog-head__deck {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 5rem);
+    align-items: start;
+    padding-bottom: clamp(3rem, 6vw, 5rem);
+  }
+
+  .prog-head__facts {
+    display: grid;
+    gap: 1.15rem;
+    border-left: 1px solid rgba(90, 103, 113, 0.3);
+    padding-left: clamp(1.25rem, 2.5vw, 2rem);
+  }
+  .prog-head__facts dd {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    text-transform: uppercase;
+    line-height: 1.1;
+    margin-top: 0.15rem;
+  }
+
+  /* --- Photographic ground for the facts rail ---------------------------
+     Same treatment as the hero: the photo is desaturated and darkened so the
+     gold pinnies stay the only chroma, a two-axis scrim buys the type its
+     contrast, and the field-line motif sits on top so it reads as brand.
+
+     The media layer BLEEDS outward from the text box rather than the text
+     moving inward, so the dl keeps its exact position, rule and spacing at
+     both breakpoints. */
+  .facts {
+    position: relative;
+    isolation: isolate;
+    --facts-bleed: clamp(1.25rem, 2.5vw, 2rem);
+  }
+
+  .facts__media {
+    position: absolute;
+    /* Left edge lands on the dl's border rule, so the rule reads as the
+       panel's edge instead of floating inside the photo. */
+    inset: calc(var(--facts-bleed) * -1) calc(var(--facts-bleed) * -1)
+           calc(var(--facts-bleed) * -1) 0;
+    z-index: -1;
+    overflow: hidden;
+    background: var(--navy-deep);
+  }
+  .facts__media :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Holds the glove bump and the REVOLT pinnie through a shallow crop. */
+    object-position: 60% 45%;
+    filter: saturate(0.72) contrast(1.08) brightness(0.74);
+  }
+
+  /* Weighted heavier than the hero's: this panel is small and the type covers
+     most of it, so the photo has to sit further back. */
+  .facts__scrim {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(95deg, rgba(10, 15, 22, 0.86) 0%, rgba(10, 15, 22, 0.5) 58%, rgba(10, 15, 22, 0.34) 100%),
+      linear-gradient(180deg, rgba(10, 15, 22, 0.58) 0%, rgba(10, 15, 22, 0.36) 42%, rgba(10, 15, 22, 0.78) 100%);
+  }
+
+  .facts__lines {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(90deg, transparent 0 118px, rgba(232, 230, 225, 0.035) 118px 119px);
+    pointer-events: none;
+  }
+
+  /* ── SEGMENT B — SEASON WINDOWS ────────────────────────── */
+  .windows { margin-bottom: clamp(3rem, 6vw, 5rem); }
+
+  .windows__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding-bottom: 1rem;
+    margin-bottom: clamp(1rem, 2vw, 1.5rem);
+    border-bottom: 1px solid rgba(90, 103, 113, 0.22);
+  }
+  .windows__hint {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--slate);
+  }
+
+  /* Three tracks for three months: January claims one, summer claims two,
+     so the panels are literally as wide as the time they occupy. */
+  .windows__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(0.75rem, 1.5vw, 1.25rem);
+  }
+
+  .win {
+    grid-column: span var(--span);
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(90, 103, 113, 0.28);
+    border-top: 3px solid var(--slate);
+    background: linear-gradient(180deg, var(--navy-lift), transparent 80%);
+    padding: clamp(1.25rem, 2.5vw, 2rem);
+    transition: border-color 0.4s ease, background 0.4s ease;
+  }
+  .win.is-featured {
+    border-color: rgba(207, 174, 30, 0.32);
+    border-top-color: var(--gold);
+    background: linear-gradient(180deg, rgba(207, 174, 30, 0.07), transparent 80%);
+  }
+  .win:hover { border-color: rgba(90, 103, 113, 0.5); }
+  .win.is-featured:hover { border-color: rgba(207, 174, 30, 0.55); }
+
+  .win__season { color: var(--slate); }
+  .win.is-featured .win__season { color: var(--gold); }
+
+  .win__months {
+    font-size: clamp(2.75rem, 7vw, 5.5rem);
+    color: var(--bone);
+    margin: 0.5rem 0 0.75rem;
+  }
+  .win.is-featured .win__months { color: var(--gold); }
+
+  .win__name {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    color: var(--bone-dim);
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(90, 103, 113, 0.22);
+  }
+  .win__idx { color: var(--slate); margin-right: 0.6rem; }
+
+  /* The weekends are the point: three months that are actually booked. */
+  .win__weeks {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  .win__week {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+  }
+  .win__week::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    flex: none;
+    background: var(--slate);
+    transform: translateY(1px);
+  }
+  .win.is-featured .win__week::before { background: var(--gold); }
+  .win__date { color: var(--bone); letter-spacing: 0.04em; }
+  .win__city { color: var(--slate); }
+
+  /* ── SEGMENT C — CARDS ─────────────────────────────────── */
+  /* Two teams, one block each — a half-width card would leave a hole. */
+  .prog-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(1rem, 2vw, 1.5rem);
+  }
+
+  .pcard {
+    border: 1px solid rgba(90, 103, 113, 0.28);
+    padding: clamp(1.5rem, 3vw, 2.25rem);
+    display: flex;
+    flex-direction: column;
+    gap: 1.35rem;
+    background: var(--navy-deep);
+    position: relative;
+    transition: border-color 0.4s, background 0.4s, transform 0.4s;
+  }
+  .pcard:hover {
+    border-color: rgba(207, 174, 30, 0.55);
+    background: var(--navy-lift);
+    transform: translateY(-3px);
+  }
+
+  .pcard__lead { display: flex; gap: clamp(1rem, 2vw, 1.75rem); align-items: flex-start; }
+
+  .pcard__index {
+    font-size: clamp(2.25rem, 4vw, 3.5rem);
+    color: transparent;
+    -webkit-text-stroke: 1.5px var(--slate);
+    line-height: 0.8;
+    flex-shrink: 0;
+    transition: -webkit-text-stroke-color 0.4s;
+  }
+  .pcard:hover .pcard__index { -webkit-text-stroke-color: var(--gold); }
+
+  .pcard__name {
+    font-size: clamp(1.5rem, 2.6vw, 2.1rem);
+    margin-block: 0.35rem 0.4rem;
+  }
+  .pcard__format {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--slate);
+    letter-spacing: 0.06em;
+  }
+  .pcard__blurb { color: var(--bone-dim); font-size: 0.95rem; }
+
+  .chip {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    padding: 0.3rem 0.6rem;
+    border: 1px solid rgba(90, 103, 113, 0.4);
+    color: var(--bone-dim);
+  }
+
+  .pcard__specs { display: grid; gap: 0.9rem; }
+  .pcard__specs--inline {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding-top: 1.1rem;
+    border-top: 1px solid rgba(90, 103, 113, 0.22);
+  }
+  .pcard__spec dd {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    margin-top: 0.2rem;
+  }
+
+  .pcard__cta { margin-top: auto; align-self: flex-start; }
+
+  /* --- Featured variant: spans the row, splits into body + rail --- */
+  .pcard--featured {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    gap: clamp(2rem, 5vw, 4.5rem);
+    border-color: var(--gold);
+    background: linear-gradient(135deg, rgba(207, 174, 30, 0.07), transparent 55%), var(--navy-deep);
+    padding-top: clamp(2.5rem, 4vw, 3.25rem);
+  }
+  .pcard--featured:hover { transform: none; }
+
+  .pcard__flag {
+    position: absolute;
+    top: 0;
+    left: clamp(1.5rem, 3vw, 2.25rem);
+    transform: translateY(-50%);
+    background: var(--gold);
+    color: var(--navy-deep);
+    padding: 0.3rem 0.75rem;
+    font-weight: 600;
+  }
+
+  .pcard--featured .pcard__body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.35rem;
+  }
+  .pcard--featured .pcard__index {
+    font-size: clamp(3rem, 6vw, 5.5rem);
+    -webkit-text-stroke-color: var(--gold);
+  }
+  .pcard--featured .pcard__name { font-size: clamp(2rem, 4vw, 3.25rem); }
+  .pcard--featured .pcard__blurb { font-size: 1.05rem; max-width: 52ch; }
+
+  .pcard--featured .pcard__side {
+    width: clamp(200px, 24%, 280px);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+    border-left: 1px solid rgba(90, 103, 113, 0.3);
+    padding-left: clamp(1.5rem, 3vw, 2.5rem);
+  }
+  .pcard--featured .pcard__spec dd { font-size: 1.05rem; color: var(--bone); }
+  .pcard--featured .pcard__cta { margin-top: 0; }
+
+  /* ── SEGMENT E — CHOOSE A SEASON ───────────────────────── */
+  .pick {
+    margin-top: clamp(3.5rem, 7vw, 6rem);
+    padding-top: clamp(2.5rem, 5vw, 4rem);
+    border-top: 1px solid rgba(90, 103, 113, 0.28);
+  }
+  .pick__head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(1.5rem, 4vw, 4rem);
+    align-items: end;
+    margin-bottom: clamp(2rem, 4vw, 3rem);
+  }
+  .pick__title { font-size: var(--fs-lg); }
+  .pick__sub { color: var(--bone-dim); max-width: 54ch; }
+
+  /* Two quiet options on the left, the offer on the right. */
+  .pick__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    gap: clamp(1rem, 2vw, 1.5rem);
+    align-items: stretch;
+  }
+  .pick__singles { display: grid; gap: clamp(1rem, 2vw, 1.5rem); }
+
+  .opt {
+    border: 1px solid rgba(90, 103, 113, 0.28);
+    padding: clamp(1.35rem, 2.6vw, 2rem);
+    display: grid;
+    gap: 1rem;
+    align-content: start;
+    transition: border-color 0.4s, background 0.4s;
+  }
+  .opt:not(.opt--both):hover { border-color: var(--slate); background: var(--navy-lift); }
+
+  .opt__idx {
+    font-size: 1.5rem;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--slate);
+  }
+  .opt__name { font-size: clamp(1.3rem, 2.4vw, 1.75rem); }
+  .opt__meta { display: block; margin-top: 0.4rem; }
+  .opt__where {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--bone-dim);
+    margin-top: 0.5rem;
+  }
+  .opt__cta { justify-self: start; }
+
+  /* The offer is the page's one inverted panel — nothing else runs gold-on-navy. */
+  .opt--both {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--navy-deep);
+    padding: clamp(1.75rem, 3.5vw, 2.75rem);
+    grid-template-rows: auto auto auto auto 1fr;
+    align-content: stretch;
+    gap: 1.1rem;
+  }
+  .opt__flag {
+    color: var(--navy-deep);
+    border: 1px solid rgba(10, 15, 22, 0.35);
+    padding: 0.3rem 0.65rem;
+    justify-self: start;
+  }
+  .opt__title { font-size: clamp(2.4rem, 5.5vw, 4rem); line-height: 0.82; }
+  .opt__copy { color: rgba(10, 15, 22, 0.82); max-width: 44ch; }
+  .opt__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    list-style: none;
+    padding: 0.9rem 0 0;
+    border-top: 1px solid rgba(10, 15, 22, 0.22);
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(10, 15, 22, 0.72);
+  }
+  .opt--both .opt__cta {
+    align-self: end;
+    background: var(--navy-deep);
+    border-color: var(--navy-deep);
+    color: var(--bone);
+    padding: 1.15rem 2rem;
+  }
+  .opt--both .opt__cta::after { background: var(--navy-lift); }
+  .opt--both .opt__cta:hover { color: var(--gold); border-color: var(--navy-deep); }
+
+  .pick__foot {
+    margin-top: clamp(1.5rem, 3vw, 2.25rem);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--slate);
+  }
+  .pick__foot a { border-bottom: 1px solid rgba(90, 103, 113, 0.5); transition: color 0.3s, border-color 0.3s; }
+  .pick__foot a:hover { color: var(--gold); border-color: var(--gold); }
+
+  /* ── Responsive ────────────────────────────────────────── */
+  /* ── SEGMENT D — THE 2027 SCHEDULE ─────────────────────── */
+  .sched { margin-top: clamp(3.5rem, 7vw, 6rem); }
+
+  .sched__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: clamp(1.25rem, 3vw, 2.5rem);
+    flex-wrap: wrap;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid rgba(90, 103, 113, 0.28);
+    margin-bottom: clamp(1.75rem, 3.5vw, 2.75rem);
+  }
+  .sched__title { font-size: clamp(1.6rem, 3.4vw, 2.6rem); }
+  .sched__sub { color: var(--bone-dim); margin-top: 0.5rem; }
+
+  .sched__tools { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+
+  /* Filter — one control, three states, current state always visible. */
+  .segmented {
+    display: flex;
+    border: 1px solid rgba(90, 103, 113, 0.4);
+  }
+  .segmented__btn {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+    padding: 0.6rem 0.9rem;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    color: var(--bone-dim);
+    transition: color 0.25s, background 0.25s;
+  }
+  .segmented__btn + .segmented__btn { border-left: 1px solid rgba(90, 103, 113, 0.4); }
+  .segmented__btn:hover { color: var(--bone); background: rgba(90, 103, 113, 0.14); }
+  .segmented__btn.is-on { color: var(--navy-deep); background: var(--gold); }
+  .segmented__n { color: var(--slate); font-size: 0.62rem; }
+  .segmented__btn.is-on .segmented__n { color: rgba(10, 15, 22, 0.6); }
+
+  .sched__export {
+    padding: 0.6rem 1rem;
+    border: 1px solid rgba(90, 103, 113, 0.4);
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    color: var(--bone-dim);
+    transition: color 0.25s, border-color 0.25s;
+  }
+  .sched__export:hover { color: var(--gold); border-color: var(--gold); }
+  .sched__export.is-done { color: var(--gold); border-color: var(--gold); }
+
+  .sched__empty {
+    color: var(--bone-dim);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    padding-block: 2rem;
+  }
+  .sched__empty[hidden] { display: none; }
+
+  /* --- A leg of the season --- */
+  .leg { margin-bottom: clamp(2rem, 4vw, 3.25rem); }
+  .leg[hidden] { display: none; }
+  .leg__head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.9rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.9rem;
+  }
+  .leg__season {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--c);
+  }
+  .leg__season::before {
+    content: '';
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    background: var(--c);
+    margin-right: 0.55rem;
+  }
+  .leg__team {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    font-size: clamp(1rem, 2vw, 1.3rem);
+    transform: skewX(var(--lean));
+  }
+  .leg__window { font-family: var(--font-mono); font-size: 0.68rem; color: var(--slate); }
+
+  .leg__list { list-style: none; padding: 0; display: grid; gap: clamp(0.75rem, 1.5vw, 1.1rem); }
+
+  /* --- The ticket --- */
+  .tkt {
+    --stub: clamp(6.5rem, 13vw, 9.5rem);
+    position: relative;
+    display: grid;
+    grid-template-columns: var(--stub) minmax(0, 1fr);
+    border: 1px solid rgba(90, 103, 113, 0.28);
+    background: linear-gradient(180deg, var(--navy-lift), rgba(22, 31, 43, 0.35));
+    transition: border-color 0.35s ease, background 0.35s ease;
+  }
+  .tkt[hidden] { display: none; }
+  .tkt:hover { border-color: rgba(207, 174, 30, 0.42); }
+
+  /* The punch: two holes at the head and foot of the perforation. Filled with
+     the page ground so the ticket reads as torn from a strip, not outlined. */
+  .tkt::before,
+  .tkt::after {
+    content: '';
+    position: absolute;
+    left: var(--stub);
+    width: 15px;
+    height: 15px;
+    margin-left: -8px;
+    border-radius: 50%;
+    background: var(--navy-deep);
+  }
+  .tkt::before { top: -8px; }
+  .tkt::after { bottom: -8px; }
+
+  .tkt__stub {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 0.15rem;
+    padding: clamp(0.85rem, 1.6vw, 1.15rem) clamp(0.6rem, 1.2vw, 1rem);
+  }
+  .tkt__logo {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 84px;
+    object-fit: contain;
+    margin-bottom: 0.5rem;
+    /* Held back so five outside brands don't outshout the page's own gold;
+       the ticket's hover brings the event fully forward. */
+    opacity: 0.85;
+    filter: saturate(0.92);
+    transition: opacity 0.35s ease, filter 0.35s ease;
+  }
+  .tkt:hover .tkt__logo { opacity: 1; filter: none; }
+  .tkt__month {
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--slate);
+  }
+  .tkt__days {
+    font-size: clamp(1.35rem, 2.8vw, 2rem);
+    line-height: 0.95;
+    transition: color 0.35s;
+  }
+  .tkt:hover .tkt__days { color: var(--gold); }
+
+  /* The tear line. Dashes are drawn, not bordered, so the gaps show the
+     ticket through rather than the page. */
+  .tkt__body {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(1rem, 1.9vw, 1.4rem) clamp(1.15rem, 2.4vw, 2rem);
+  }
+  .tkt__body::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 10px;
+    bottom: 10px;
+    width: 1px;
+    background: repeating-linear-gradient(
+      180deg,
+      rgba(90, 103, 113, 0.55) 0 5px,
+      transparent 5px 11px
+    );
+  }
+
+  .tkt__name { font-size: clamp(1.15rem, 2.3vw, 1.7rem); }
+  .tkt__name a { transition: color 0.3s; }
+  .tkt__name a:hover { color: var(--gold); }
+  .tkt__where {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--slate);
+    margin: 0.4rem 0 0.85rem;
+  }
+  .tkt__pitch { color: var(--bone-dim); max-width: 66ch; }
+
+  .tkt__facts {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.4rem;
+    margin: 0.8rem 0 0.9rem;
+  }
+  .tkt__facts li {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--bone-dim);
+  }
+  .tkt__facts li::before {
+    content: '';
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    background: var(--gold);
+    margin-right: 0.5rem;
+    transform: translateY(-2px);
+  }
+
+  .tkt__actions {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    padding-top: 0.85rem;
+    border-top: 1px solid rgba(90, 103, 113, 0.2);
+  }
+  .tkt__link,
+  .tkt__cal {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    padding: 0.5rem 0.85rem;
+    border: 1px solid rgba(90, 103, 113, 0.4);
+    color: var(--bone-dim);
+    transition: color 0.25s, border-color 0.25s, background 0.25s;
+  }
+  .tkt__link:hover,
+  .tkt__cal:hover { color: var(--gold); border-color: var(--gold); }
+  .tkt__cal.is-done {
+    color: var(--navy-deep);
+    background: var(--gold);
+    border-color: var(--gold);
+  }
+
+  @media (max-width: 620px) {
+    /* Stub becomes a header strip: logo and date side by side, tear line
+       turned horizontal so the ticket still reads as a ticket. */
+    .tkt { grid-template-columns: minmax(0, 1fr); }
+    .tkt::before,
+    .tkt::after { display: none; }
+    .tkt__stub {
+      flex-direction: row;
+      align-items: center;
+      gap: 0.75rem;
+      text-align: left;
+      padding-bottom: 0;
+    }
+    .tkt__logo { width: 3.25rem; margin-bottom: 0; }
+    .tkt__days { font-size: 1.5rem; }
+    .tkt__body::before {
+      top: 0;
+      left: clamp(1.15rem, 2.4vw, 2rem);
+      right: clamp(1.15rem, 2.4vw, 2rem);
+      bottom: auto;
+      width: auto;
+      height: 1px;
+      background: repeating-linear-gradient(
+        90deg,
+        rgba(90, 103, 113, 0.55) 0 5px,
+        transparent 5px 11px
+      );
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tkt, .tkt__logo, .tkt__days, .segmented__btn { transition: none; }
+  }
+
+  @media (max-width: 1000px) {
+    .pick__grid { grid-template-columns: minmax(0, 1fr); }
+    .opt--both { grid-template-rows: none; }
+    .pcard--featured { flex-direction: column; gap: 1.75rem; }
+    .pcard--featured .pcard__side {
+      width: 100%;
+      border-left: 0;
+      border-top: 1px solid rgba(90, 103, 113, 0.3);
+      padding-left: 0;
+      padding-top: 1.75rem;
+    }
+    .pcard--featured .pcard__specs {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1rem;
+    }
+  }
+
+  @media (max-width: 780px) {
+    .pick__head { grid-template-columns: 1fr; align-items: start; }
+    .prog-head__deck { grid-template-columns: 1fr; }
+    /* Single column here: a long label like "Current program plan" wraps to
+       three lines in a third of a phone screen and drops its value out of
+       line with the others. */
+    .prog-head__facts {
+      grid-template-columns: minmax(0, 1fr);
+      border-left: 0;
+      border-top: 1px solid rgba(90, 103, 113, 0.3);
+      padding-left: 0;
+      padding-top: 1.5rem;
+    }
+    /* No left rule to align to down here — bleed on all four sides. */
+    .facts__media { inset: calc(var(--facts-bleed) * -1); }
+    .prog-grid { grid-template-columns: 1fr; }
+    .windows__grid { grid-template-columns: minmax(0, 1fr); }
+    .win { grid-column: span 1; }
+    .pcard--featured .pcard__specs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+</style>
+
+<script>
+  /**
+   * SCHEDULE — filtering and calendar export.
+   *
+   * Both are progressive enhancements over the rendered list: with this
+   * script absent every ticket is still on the page and every event still
+   * links to its own site.
+   */
+  const sched = document.querySelector<HTMLElement>('.sched');
+
+  if (sched) {
+    const tickets = [...sched.querySelectorAll<HTMLElement>('.tkt')];
+    const legs = [...sched.querySelectorAll<HTMLElement>('.leg')];
+    const empty = sched.querySelector<HTMLElement>('.sched__empty');
+
+    /* --- Filter ------------------------------------------------------ */
+    const filters = [...sched.querySelectorAll<HTMLButtonElement>('[data-filter]')];
+
+    function apply(which: string) {
+      tickets.forEach((t) => {
+        t.hidden = which !== 'all' && t.dataset.leg !== which;
+      });
+      // A leg with nothing left in it takes its heading with it.
+      legs.forEach((l) => {
+        l.hidden = !l.querySelector('.tkt:not([hidden])');
+      });
+      filters.forEach((b) => {
+        const on = b.dataset.filter === which;
+        b.classList.toggle('is-on', on);
+        b.setAttribute('aria-pressed', String(on));
+      });
+      if (empty) {
+        const n = tickets.filter((t) => !t.hidden).length;
+        empty.hidden = n > 0;
+        empty.textContent = n > 0 ? '' : 'No stops on that roster yet.';
+      }
+    }
+
+    filters.forEach((b) => b.addEventListener('click', () => apply(b.dataset.filter!)));
+
+    /* --- Calendar export --------------------------------------------- */
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const stamp = (iso: string) => iso.replace(/-/g, '');
+
+    /** DTEND on an all-day event is exclusive, so the last day plus one. */
+    function dayAfter(iso: string) {
+      const d = new Date(iso + 'T00:00:00Z');
+      d.setUTCDate(d.getUTCDate() + 1);
+      return `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}`;
+    }
+
+    const esc = (s: string) => s.replace(/([,;\\])/g, '\\$1').replace(/\n/g, '\\n');
+
+    function vevent(el: HTMLElement) {
+      const d = el.dataset;
+      return [
+        'BEGIN:VEVENT',
+        `UID:${stamp(d.start!)}-${d.name!.toLowerCase().replace(/[^a-z0-9]+/g, '-')}@revoltlc.com`,
+        `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+        `DTSTART;VALUE=DATE:${stamp(d.start!)}`,
+        `DTEND;VALUE=DATE:${dayAfter(d.end!)}`,
+        `SUMMARY:${esc(d.name!)} — Revolt LC`,
+        `LOCATION:${esc(d.loc!)}`,
+        `URL:${d.url}`,
+        'END:VEVENT',
+      ].join('\r\n');
+    }
+
+    function download(events: HTMLElement[], filename: string) {
+      if (!events.length) return;
+      const ics = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//Revolt LC//2027 Schedule//EN',
+        'CALSCALE:GREGORIAN',
+        ...events.map(vevent),
+        'END:VCALENDAR',
+      ].join('\r\n');
+
+      const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    /** Confirms in the button itself, then hands the label back. */
+    function confirmOn(btn: HTMLElement, msg: string) {
+      const original = btn.textContent;
+      btn.textContent = msg;
+      btn.classList.add('is-done');
+      setTimeout(() => {
+        btn.textContent = original;
+        btn.classList.remove('is-done');
+      }, 2200);
+    }
+
+    sched.querySelectorAll<HTMLButtonElement>('[data-export="one"]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const tkt = btn.closest<HTMLElement>('.tkt');
+        if (!tkt) return;
+        download([tkt], `revolt-${tkt.dataset.start}.ics`);
+        confirmOn(btn, 'Downloaded');
+      });
+    });
+
+    const exportAll = sched.querySelector<HTMLButtonElement>('[data-export="all"]');
+    exportAll?.addEventListener('click', () => {
+      // Exports what's on screen, so the filter and the button agree.
+      const shown = tickets.filter((t) => !t.hidden);
+      download(shown, 'revolt-lc-2027-schedule.ics');
+      confirmOn(exportAll, `${shown.length} events downloaded`);
+    });
+  }
+</script>

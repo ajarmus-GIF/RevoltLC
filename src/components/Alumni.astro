@@ -1,0 +1,480 @@
+---
+import { alumni, commitmentCount, collegeCount, collegeList } from '../data/alumni';
+import CollegeLink from './CollegeLink.astro';
+
+const pad = (n: number) => String(n).padStart(2, '0');
+const shortHS = (s: string) => s.replace(/ High School$/, '');
+---
+
+<!--
+  THE DEPARTURES BOARD
+  ────────────────────
+  "Where they went" taken literally: a terminal board. Origin, destination,
+  status — the club is the terminal these players passed through.
+
+  Two reasons this shape and not a list:
+  1. Programs and Coaches both already run full-width rows that gold-wipe on
+     hover. A third one made this section read as more of the same page. The
+     board is a panel, not a rail, so it lands as its own object.
+  2. Real departure boards are amber on black. The Revolt palette is gold on
+     navy. The metaphor and the brand are already the same two colours, so the
+     board needs no styling that isn't already in the design system.
+
+  Roster order, never grouped by school — see the note in data/alumni.ts. The
+  board's only aggregate is a count, and the footer roll is alphabetical.
+-->
+<section class="section alumni" id="alumni">
+  <div class="shell">
+    <header class="reveal">
+      <div class="eyebrow">
+        <span class="label">[ 003 ]</span>
+        <span class="eyebrow__rule"></span>
+        <span class="label label--dim">Where They Went</span>
+      </div>
+
+      <!-- Scale jump rather than the indent-stagger the other two sections
+           use, so the claim lands as one word-sized fact: college. -->
+      <h2 class="alumni__title display">
+        <span class="alumni__kicker">Revolt players</span>
+        <span class="alumni__punch display--gold">play in college.</span>
+      </h2>
+
+      <p class="alumni__lede lede">
+        Every name on the board came up through this club. That is the whole point
+        of the off-season.
+      </p>
+    </header>
+  </div>
+
+  <!-- Full-bleed: the board is mounted on the wall, not set into a column.
+       Nothing else on the page breaks the shell. -->
+  <div class="board reveal">
+    <div class="board__inner">
+
+      <div class="board__chrome">
+        <span class="board__live">
+          <i aria-hidden="true"></i>Recent commitments board
+        </span>
+        <span class="board__tally">
+          <b>{pad(commitmentCount)}</b> committed
+          <span class="board__sep" aria-hidden="true">/</span>
+          <b>{pad(collegeCount)}</b> programs
+        </span>
+      </div>
+
+      <!-- Column heads sit outside the list: every .row is its own grid, so
+           they line up without being a numbered entry on the board. -->
+      <div class="row row--head" aria-hidden="true">
+        <span class="row__no">No.</span>
+        <span class="row__player">Player</span>
+        <span class="row__from">From</span>
+        <span class="row__leader"></span>
+        <span class="row__dest">Destination</span>
+        <span class="row__status">Status</span>
+      </div>
+
+      <ol class="board__rows">
+        {alumni.map((a, i) => (
+          <li class="row" style={`--r:${i}`}>
+            <span class="row__no">{pad(i + 1)}</span>
+
+            <span class="row__player display">{a.name}</span>
+            <span class="row__from">{shortHS(a.highSchool)}</span>
+
+            <span class="row__leader" aria-hidden="true"></span>
+
+            <span class="row__dest display">
+              {/* Split-flap: each character is its own flap, staggered by
+                  row then by column. Chars render normally without JS —
+                  the animation only exists once .is-in lands. The link wraps the
+                  whole flap, so the sr-only name is what gets announced. */}
+              <CollegeLink name={a.college} class="clink--flap">
+                <span class="sr-only">{a.college}</span>
+                <span class="flap" aria-hidden="true">
+                  {[...a.college].map((ch, ci) => (
+                    <span class="flap__c" style={`--i:${ci}`}>{ch === ' ' ? ' ' : ch}</span>
+                  ))}
+                </span>
+              </CollegeLink>
+            </span>
+
+            <span class="row__status">
+              <i class="dot" aria-hidden="true"></i>Committed
+            </span>
+          </li>
+        ))}
+
+        <!-- The board always keeps one row open. Deliberately unlike the rows
+             above in every way — dashed, dimmed, captioned OPEN — so it can't
+             be misread as a tenth commitment. -->
+        <li class="row row--open" style={`--r:${alumni.length}`}>
+          <span class="row__no">{pad(alumni.length + 1)}</span>
+
+          <span class="row__player display">
+            Your name<span class="caret" aria-hidden="true"></span>
+          </span>
+          <span class="row__from">Your high school</span>
+
+          <span class="row__leader" aria-hidden="true"></span>
+
+          <span class="row__dest display">Wherever you earn it</span>
+
+          <span class="row__status">
+            <a href="/signup" class="row__cta">
+              Open <span class="btn__arrow" aria-hidden="true">→</span>
+            </a>
+          </span>
+        </li>
+      </ol>
+
+      <p class="board__roll">
+        {collegeList.map((c, i) => (
+          <>
+            {i > 0 && <span class="board__dot" aria-hidden="true">·</span>}
+            <CollegeLink name={c} />
+          </>
+        ))}
+      </p>
+
+    </div>
+  </div>
+</section>
+
+<style>
+  /* ── Header ──────────────────────────────────────────────── */
+  .alumni__title {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: clamp(1.5rem, 3vw, 2.25rem);
+  }
+  .alumni__kicker { font-size: var(--fs-lg); color: var(--bone-dim); }
+  .alumni__punch  { font-size: clamp(3rem, 9vw, 8rem); }
+
+  .alumni__lede { max-width: 58ch; }
+
+  /* ── The board ───────────────────────────────────────────── */
+  .board {
+    width: 100vw;
+    margin-inline: calc(50% - 50vw);
+    margin-top: clamp(3rem, 6vw, 5rem);
+    position: relative;
+    overflow: hidden;
+    /* Faint gold bloom off the top edge — a lit board, not a dark table. */
+    background:
+      linear-gradient(180deg, rgba(207, 174, 30, 0.06), transparent 22%),
+      var(--navy);
+    border-block: 1px solid rgba(90, 103, 113, 0.32);
+  }
+  /* Scanlines. Low enough to read as texture, not as a filter. */
+  .board::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      180deg,
+      rgba(232, 230, 225, 0.028) 0 1px,
+      transparent 1px 3px
+    );
+  }
+
+  .board__inner {
+    max-width: var(--maxw);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+    padding-block: clamp(1.1rem, 2.2vw, 1.75rem);
+  }
+
+  /* --- Chrome bar --- */
+  .board__chrome {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.75rem, 2vw, 2rem);
+    flex-wrap: wrap;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--slate);
+    padding-bottom: clamp(0.9rem, 1.8vw, 1.35rem);
+  }
+  .board__live {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-right: auto;
+    color: var(--bone-dim);
+  }
+  .board__live i {
+    width: 7px;
+    height: 7px;
+    background: var(--gold);
+    border-radius: 50%;
+    animation: blip 2.4s ease-in-out infinite;
+  }
+  @keyframes blip {
+    0%, 100% { opacity: 1;   box-shadow: 0 0 0 0 rgba(207, 174, 30, 0.5); }
+    50%      { opacity: 0.4; box-shadow: 0 0 0 6px rgba(207, 174, 30, 0); }
+  }
+  .board__tally b { color: var(--gold); font-weight: 500; }
+  .board__sep { color: rgba(90, 103, 113, 0.6); padding-inline: 0.35rem; }
+
+  /* --- Rows --- */
+  .board__rows { list-style: none; padding: 0; margin: 0; }
+
+  .row {
+    position: relative;
+    display: grid;
+    grid-template-columns:
+      clamp(2rem, 3.5vw, 3rem)      /* no.   */
+      minmax(0, 1.05fr)             /* name  */
+      minmax(0, 0.7fr)              /* from  */
+      minmax(1.75rem, 0.85fr)       /* rail  */
+      minmax(0, 1.35fr)             /* dest  */
+      minmax(0, auto);              /* stat  */
+    align-items: center;
+    gap: clamp(0.7rem, 1.8vw, 1.75rem);
+    padding-block: clamp(0.85rem, 1.9vw, 1.35rem);
+    border-top: 1px solid rgba(90, 103, 113, 0.2);
+    transition: background 0.4s ease;
+  }
+
+  .row--head {
+    border-top: 1px solid rgba(90, 103, 113, 0.45);
+    border-bottom: 1px solid rgba(90, 103, 113, 0.45);
+    padding-block: 0.6rem;
+  }
+  /* Column labels are labels — override the cell type the data rows set. */
+  .row--head > * {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--slate);
+    line-height: 1;
+  }
+  .row--head .row__leader { background: none; }
+  .row--head .row__leader::after { display: none; }
+
+  /* Gold tab slides out of the left edge on hover — the row "selects". */
+  .row:not(.row--head)::before {
+    content: '';
+    position: absolute;
+    left: calc(var(--gutter) * -0.5);
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--gold);
+    transform: scaleY(0);
+    transform-origin: center;
+    transition: transform 0.35s cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  .row:not(.row--head):hover { background: rgba(232, 230, 225, 0.035); }
+  .row:not(.row--head):hover::before { transform: scaleY(1); }
+
+  .row__no {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--slate);
+    transition: color 0.35s;
+  }
+  .row:hover .row__no { color: var(--gold); }
+
+  .row__player {
+    font-size: clamp(1.05rem, 1.9vw, 1.5rem);
+    line-height: 1;
+  }
+
+  .row__from {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--slate);
+  }
+
+  /* Dotted leader with an arrowhead — the flight path between the two names.
+     The dots drift toward the destination while the row is hovered. */
+  .row__leader {
+    position: relative;
+    height: 1px;
+    background-image: radial-gradient(circle, rgba(90, 103, 113, 0.85) 1px, transparent 1px);
+    background-size: 7px 1px;
+    background-repeat: repeat-x;
+    background-position: 0 0;
+  }
+  .row__leader::after {
+    content: '';
+    position: absolute;
+    right: -1px;
+    top: 50%;
+    width: 5px;
+    height: 5px;
+    border-top: 1px solid var(--slate);
+    border-right: 1px solid var(--slate);
+    transform: translateY(-50%) rotate(45deg);
+    transition: border-color 0.35s;
+  }
+  .row:hover .row__leader {
+    animation: drift 0.6s linear infinite;
+    background-image: radial-gradient(circle, var(--gold) 1px, transparent 1px);
+  }
+  .row:hover .row__leader::after { border-color: var(--gold); }
+  @keyframes drift {
+    to { background-position: 7px 0; }
+  }
+
+  .row__dest {
+    font-size: clamp(1.05rem, 1.9vw, 1.5rem);
+    line-height: 1;
+    color: var(--gold);
+    transition: color 0.35s, text-shadow 0.35s;
+  }
+  /* The lit-board glow only on the hovered row, so it stays an accent. */
+  .row:hover .row__dest {
+    color: var(--gold-hot);
+    text-shadow: 0 0 22px rgba(232, 198, 42, 0.45);
+  }
+
+  .row__status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-self: end;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--bone-dim);
+    white-space: nowrap;
+  }
+  .dot {
+    width: 6px;
+    height: 6px;
+    background: var(--gold);
+    flex-shrink: 0;
+  }
+
+  /* --- Split-flap --- */
+  .flap { display: inline-block; perspective: 420px; }
+  .flap__c {
+    display: inline-block;
+    transform-origin: 50% 100%;
+    backface-visibility: hidden;
+  }
+  /* No .is-in (no JS, or not scrolled to yet) = plain visible text. */
+  .board.is-in .flap__c {
+    animation: flap 0.5s cubic-bezier(0.2, 0.85, 0.3, 1) both;
+    /* 260ms lets the section's own fade-in finish first. */
+    animation-delay: calc(260ms + (var(--r) * 85ms) + (var(--i) * 24ms));
+  }
+  @keyframes flap {
+    0%   { transform: rotateX(-92deg); opacity: 0; }
+    58%  { transform: rotateX(14deg);  opacity: 1; }
+    100% { transform: rotateX(0);      opacity: 1; }
+  }
+
+  /* --- The open slot --- */
+  .row--open {
+    border-top: 1px dashed rgba(207, 174, 30, 0.4);
+    background: linear-gradient(90deg, rgba(207, 174, 30, 0.05), transparent 60%);
+  }
+  .row--open .row__player,
+  .row--open .row__dest {
+    color: var(--slate);
+    text-shadow: none;
+  }
+  .row--open:hover .row__dest { color: var(--gold); text-shadow: none; }
+  .row--open .row__leader {
+    background-image: radial-gradient(circle, rgba(90, 103, 113, 0.5) 1px, transparent 1px);
+  }
+
+  .caret {
+    display: inline-block;
+    width: 0.5em;
+    height: 0.85em;
+    margin-left: 0.15em;
+    background: var(--gold);
+    vertical-align: baseline;
+    animation: caret 1.1s steps(1) infinite;
+  }
+  @keyframes caret { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
+
+  .row__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--gold);
+    font-weight: 600;
+    transition: color 0.3s;
+  }
+  /* Whole row is the target; the link keeps the accessible name. */
+  .row__cta::after { content: ''; position: absolute; inset: 0; }
+  .row__cta .btn__arrow { transition: transform 0.3s; }
+  .row--open:hover .row__cta { color: var(--gold-hot); }
+  .row--open:hover .row__cta .btn__arrow { transform: translateX(4px); }
+
+  /* Closing roll of the destination set — centred, and carrying the label
+     treatment the caption used to hold so the strip still reads as board
+     chrome rather than as a stray line of body copy. */
+  .board__roll {
+    padding-top: clamp(0.9rem, 1.8vw, 1.35rem);
+    margin-top: clamp(0.9rem, 1.8vw, 1.35rem);
+    border-top: 1px solid rgba(90, 103, 113, 0.2);
+    text-align: center;
+    text-wrap: balance;
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    line-height: 2;
+    color: var(--bone-dim);
+  }
+  .board__dot { color: var(--gold-deep); padding-inline: 0.45rem; }
+
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* ── Responsive ──────────────────────────────────────────── */
+  @media (max-width: 900px) {
+    /* Three columns, every cell placed explicitly: an auto-column item with a
+       definite row is placed before the auto-flow ones and would shunt the
+       rest out of line (same trap as the Coaches roster). */
+    .row {
+      grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+      align-items: start;
+      row-gap: 0.4rem;
+      padding-block: clamp(1rem, 3vw, 1.35rem);
+    }
+    .row__no     { grid-column: 1; grid-row: 1 / 4; }
+    .row__player { grid-column: 2; grid-row: 1; }
+    .row__status { grid-column: 3; grid-row: 1; }
+    .row__from   { grid-column: 2 / 4; grid-row: 2; }
+    .row__dest   { grid-column: 2 / 4; grid-row: 3; }
+    .row__leader { display: none; }
+
+    /* The header row only labels columns that no longer exist side by side. */
+    .row--head { display: none; }
+
+    /* Destination is the payload on a phone — let it outweigh the name. */
+    .row__dest { font-size: clamp(1.3rem, 5.5vw, 1.75rem); }
+    .row__player { font-size: clamp(1rem, 4vw, 1.25rem); color: var(--bone-dim); }
+
+    .row:not(.row--head)::before { left: calc(var(--gutter) * -0.35); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .board.is-in .flap__c { animation: none; }
+    .board__live i,
+    .caret { animation: none; }
+    .row:hover .row__leader { animation: none; }
+  }
+</style>

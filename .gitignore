@@ -22,3 +22,8 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# Original photo archive. The site uses the downscaled copies in
+# src/assets/gallery/ (238 unique, long edge capped at 2400px); this folder is
+# the untouched 506MB source and does not belong in the repo.
+Revolt Photos/
