@@ -1,0 +1,21 @@
+# Netlify build configuration.
+#
+# NODE_VERSION is pinned because package.json only states ">=22.12.0", which
+# Netlify does not resolve to a concrete release. Astro 7 needs 22.12+, so an
+# older default image would fail the build outright.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Everything Astro emits into /_astro/ carries a content hash in its filename
+# (dsc-0535.CMpeeVse_ZDYEBD.webp), so a new build produces a new name. Those
+# files can never go stale and are safe to cache permanently — which matters
+# here, where the gallery is ~850 images.
+[[headers]]
+  for = "/_astro/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
