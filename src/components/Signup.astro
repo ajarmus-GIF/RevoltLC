@@ -7,14 +7,14 @@
  * form, and cannot be chosen from this page. The key is a public form
  * identifier, not a secret; it ships in the page source by design.
  *
- * ⚠ ACCESS_KEY IS UNSET. Until it is filled in, data-endpoint is not
- *   rendered and the form refuses to submit rather than failing silently.
+ * If ACCESS_KEY is ever blanked, data-endpoint is not rendered and the form
+ * refuses to submit rather than failing silently.
  */
 import { Image } from 'astro:assets';
 import teamPhoto from '../assets/join-team.jpg';
 
 const ENDPOINT = 'https://api.web3forms.com/submit';
-const ACCESS_KEY = '';
+const ACCESS_KEY = '49b39088-4747-4944-9b01-d26dc1f14ce8';
 
 const interests = [
   { id: 'summer', label: 'Summer travel' },

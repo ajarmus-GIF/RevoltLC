@@ -22,14 +22,14 @@
  * form, and cannot be chosen from this page. The key is a public form
  * identifier, not a secret; it ships in the page source by design.
  *
- * ⚠ ACCESS_KEY IS UNSET. Until it is filled in, data-endpoint is not
- *   rendered and the form refuses to submit rather than failing silently.
+ * If ACCESS_KEY is ever blanked, data-endpoint is not rendered and the form
+ * refuses to submit rather than failing silently.
  */
 import Layout from '../layouts/Layout.astro';
 import { programs, seasons, citiesFor, totalTournaments, allStates } from '../data/programs';
 
 const ENDPOINT = 'https://api.web3forms.com/submit';
-const ACCESS_KEY = '';
+const ACCESS_KEY = '8894d877-04e4-4c83-be5f-c2a1b425fe97';
 
 /** ⚠ SET THIS — the club's Venmo username, without the leading @. */
 const VENMO = '';
