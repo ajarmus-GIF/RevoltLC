@@ -2,17 +2,19 @@
 /**
  * EMAIL SIGN-UP
  *
- * Submissions go to Web3Forms, which emails them to the address this access
- * key is registered to. The key is a public form identifier, not a secret —
- * it ships in the page source by design. This is a SEPARATE key from the one
- * on the registration page (src/pages/signup.astro), so list sign-ups and
- * roster registrations stay in different inboxes.
+ * Submissions go to Web3Forms, which emails them to the address the access
+ * key is registered to — the destination is set on the Web3Forms side, per
+ * form, and cannot be chosen from this page. The key is a public form
+ * identifier, not a secret; it ships in the page source by design.
+ *
+ * ⚠ ACCESS_KEY IS UNSET. Until it is filled in, data-endpoint is not
+ *   rendered and the form refuses to submit rather than failing silently.
  */
 import { Image } from 'astro:assets';
 import teamPhoto from '../assets/join-team.jpg';
 
 const ENDPOINT = 'https://api.web3forms.com/submit';
-const ACCESS_KEY = '49b39088-4747-4944-9b01-d26dc1f14ce8';
+const ACCESS_KEY = '';
 
 const interests = [
   { id: 'summer', label: 'Summer travel' },
@@ -72,7 +74,7 @@ const interests = [
         </p>
       </div>
 
-      <form class="join__form" id="signup-form" novalidate data-endpoint={ENDPOINT}>
+      <form class="join__form" id="signup-form" novalidate data-endpoint={ACCESS_KEY ? ENDPOINT : undefined}>
         <input type="hidden" name="access_key" value={ACCESS_KEY} />
         <input type="hidden" name="from_name" value="Revolt LC website" />
         <!-- Web3Forms' honeypot: a real person never checks a hidden box. -->
@@ -374,8 +376,17 @@ const interests = [
     if (err) err.hidden = valid;
     if (!valid) { email?.focus(); return; }
 
+    // No access key set, so data-endpoint was never rendered. Say so out loud
+    // rather than posting a submission that can only fail.
     const endpoint = form.dataset.endpoint;
-    if (!endpoint) return;
+    if (!endpoint) {
+      if (errDetail) errDetail.textContent = 'This form is not connected yet.';
+      if (errBox) {
+        errBox.hidden = false;
+        errBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
 
     const fd = new FormData(form);
     const data = Object.fromEntries(fd) as Record<string, string>;

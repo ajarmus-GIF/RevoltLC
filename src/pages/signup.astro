@@ -18,15 +18,18 @@
  * data/programs.ts, so it can never drift from the programs on the home page.
  *
  * Submissions go to Web3Forms, which emails them to the address the access
- * key is registered to. The key is a public form identifier, not a secret —
- * it ships in the page source by design. Swap ENDPOINT and ACCESS_KEY together
- * to move providers.
+ * key is registered to — the destination is set on the Web3Forms side, per
+ * form, and cannot be chosen from this page. The key is a public form
+ * identifier, not a secret; it ships in the page source by design.
+ *
+ * ⚠ ACCESS_KEY IS UNSET. Until it is filled in, data-endpoint is not
+ *   rendered and the form refuses to submit rather than failing silently.
  */
 import Layout from '../layouts/Layout.astro';
 import { programs, seasons, citiesFor, totalTournaments, allStates } from '../data/programs';
 
 const ENDPOINT = 'https://api.web3forms.com/submit';
-const ACCESS_KEY = '8894d877-04e4-4c83-be5f-c2a1b425fe97';
+const ACCESS_KEY = '';
 
 /** ⚠ SET THIS — the club's Venmo username, without the leading @. */
 const VENMO = '';
@@ -140,7 +143,7 @@ const positions = ['Attack', 'Midfield', 'Defense', 'LSM', 'FOGO', 'Goalie'];
   <!-- ═══ FORM ═════════════════════════════════════════════════ -->
   <section class="section form" id="form">
     <div class="shell">
-      <form class="reg__form" id="reg-form" novalidate data-endpoint={ENDPOINT}>
+      <form class="reg__form" id="reg-form" novalidate data-endpoint={ACCESS_KEY ? ENDPOINT : undefined}>
         <input type="hidden" name="access_key" value={ACCESS_KEY} />
         <input type="hidden" name="from_name" value="Revolt LC website" />
         <!-- Web3Forms' honeypot: a real person never checks a hidden box. -->
@@ -1098,8 +1101,17 @@ const positions = ['Attack', 'Midfield', 'Defense', 'LSM', 'FOGO', 'Goalie'];
       return;
     }
 
+    // No access key set, so data-endpoint was never rendered. Say so out loud
+    // rather than posting a submission that can only fail.
     const endpoint = form.dataset.endpoint;
-    if (!endpoint) return;
+    if (!endpoint) {
+      if (errDetail) errDetail.textContent = 'This form is not connected yet.';
+      if (errBox) {
+        errBox.hidden = false;
+        errBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
 
     const data = Object.fromEntries(new FormData(form)) as Record<string, string>;
 
