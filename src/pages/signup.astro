@@ -10,9 +10,11 @@
  *      sizing, medical, agreement) so the page can be laid out and judged.
  *      Add / cut / reorder freely — every field is plain markup.
  *
- *   2. VENMO + FEES — see the VENMO and FEES constants directly below. No
- *      handle and no price were supplied, so neither is invented here; the
- *      payment panel renders a visible "not set" state until they're filled.
+ *   2. PAYMENT — see the constants directly below. Two ways to pay:
+ *        · Card, through Stripe Payment Links (FEES / BUNDLE_PRICE / STRIPE_LINKS)
+ *        · Venmo, at a discounted cash rate (VENMO / VENMO_FEES)
+ *      No handle, price or link was supplied, so none is invented here; each
+ *      payment panel renders a visible "not set" state until it's filled.
  *
  * The program selector is NOT a placeholder: it's generated from
  * data/programs.ts, so it can never drift from the programs on the home page.
@@ -31,31 +33,74 @@ import { programs, seasons, citiesFor, totalTournaments, allStates } from '../da
 const ENDPOINT = 'https://api.web3forms.com/submit';
 const ACCESS_KEY = '6509df5d-9c63-4de5-85fc-7603bf8146ec';
 
-/** ⚠ SET THIS — the club's Venmo username, without the leading @. */
-const VENMO = '';
+/** The id the bundle is submitted under, alongside the program ids. */
+const BUNDLE_ID = 'both';
 
 /**
- * ⚠ SET THESE — program fees, keyed by program id.
+ * ⚠ SET THESE — the CARD price for each program, keyed by program id. This is
+ * the full price, and it must match the price on the Stripe product exactly —
+ * Stripe charges what's set there, not what this page says.
  * Pricing is listed as NOT SUPPLIED in data/programs.ts, so nothing is
- * guessed here. A null renders as "TBD" and the payment panel says so out
- * loud rather than showing a made-up number.
+ * guessed here. A null renders as "TBD" rather than a made-up number.
  */
 const FEES: Record<string, number | null> = {
-  'box-travel': null,
-  'summer-travel': null,
+  'box-travel': 622,
+  'summer-travel': 827,
 };
 
 /**
- * ⚠ SET THIS — the all-in price for running both rosters, and the id the
- * bundle is submitted under. The saving is DERIVED (separate total minus
- * this), never typed in, so the card can't advertise a discount the two
- * prices above don't actually add up to.
+ * ⚠ SET THIS — the all-in card price for running both rosters. The bundle
+ * saving is DERIVED (separate total minus this), never typed in, so the card
+ * can't advertise a discount the two prices above don't actually add up to.
  */
-const BUNDLE_ID = 'both';
-const BUNDLE_PRICE: number | null = null;
+const BUNDLE_PRICE: number | null = 1242;
+
+/**
+ * ⚠ SET THESE — one Stripe Payment Link per option (https://buy.stripe.com/…).
+ * Made in the Stripe Dashboard under Payment Links; each link is a public URL,
+ * not a secret, so it's safe in the page source. Use the test-mode links
+ * (buy.stripe.com/test_…) until a real card has been run end to end, then
+ * swap in the live ones. An empty string shows a "not set" state instead of
+ * a button. Set each link's after-payment redirect to /signup?paid=1.
+ */
+const STRIPE_LINKS: Record<string, string> = {
+  'box-travel': 'https://buy.stripe.com/4gM8wPh1tdr09KO6poebu03',
+  'summer-travel': 'https://buy.stripe.com/5kQ4gz6mPfz8cX0cNMebu04',
+  [BUNDLE_ID]: 'https://buy.stripe.com/fZuaEX4eH0Ee5uybJIebu05',
+};
+
+/** ⚠ SET THIS — the club's Venmo username, without the leading @. */
+const VENMO = 'RevoltLC';
+
+/**
+ * ⚠ SET THESE — the discounted VENMO (cash) price for each option, bundle
+ * included. The discount shown beside it is derived from the card price, so
+ * it can't drift from what Stripe actually charges.
+ */
+const VENMO_FEES: Record<string, number | null> = {
+  'box-travel': 600,
+  'summer-travel': 800,
+  [BUNDLE_ID]: 1200,
+};
 
 const money = (n: number | null) =>
   n === null ? 'TBD' : `$${n.toLocaleString('en-US')}`;
+
+/** Card price for any option, bundle included. */
+const cardPrice = (id: string) => (id === BUNDLE_ID ? BUNDLE_PRICE : FEES[id] ?? null);
+
+/** How much paying by Venmo saves — only a real, positive number is ever shown. */
+const venmoSaving = (id: string) => {
+  const card = cardPrice(id);
+  const cash = VENMO_FEES[id] ?? null;
+  return card !== null && cash !== null && card > cash ? card - cash : null;
+};
+
+/** Every payable option in display order — the two rosters, then the bundle. */
+const options = [
+  ...programs.map((p) => ({ id: p.id, name: p.name })),
+  { id: BUNDLE_ID, name: 'Both rosters' },
+];
 
 /** What the two rosters cost bought separately — null until every fee is set. */
 const fees = programs.map((p) => FEES[p.id] ?? null);
@@ -76,7 +121,7 @@ const positions = ['Attack', 'Midfield', 'Defense', 'LSM', 'FOGO', 'Goalie'];
 
 <Layout
   title="Register — Revolt Lacrosse Club"
-  description="Register for a Revolt LC roster. Pick your program, submit player and guardian details, and pay by Venmo."
+  description="Register for a Revolt LC roster. Pick your program, submit player and guardian details, and pay by card or Venmo."
 >
   <!-- ═══ HEADER ═══════════════════════════════════════════════
        The photo is portrait, so it takes a full-height column beside
@@ -99,13 +144,13 @@ const positions = ['Attack', 'Midfield', 'Defense', 'LSM', 'FOGO', 'Goalie'];
 
         <p class="lede reg__lede">
           One form for both rosters. It takes about three minutes, and payment is
-          the last step — you'll send it by Venmo once the details are in.
+          the last step — pay by card, or save with Venmo, once the details are in.
         </p>
 
         <ol class="reg__steps">
           <li><b>01</b> Choose your program</li>
           <li><b>02</b> Player &amp; guardian details</li>
-          <li><b>03</b> Pay by Venmo</li>
+          <li><b>03</b> Pay by card or Venmo</li>
         </ol>
       </div>
 
@@ -187,6 +232,9 @@ const positions = ['Attack', 'Midfield', 'Defense', 'LSM', 'FOGO', 'Goalie'];
                     <span class="label label--dim">Program fee</span>
                     <b>{money(FEES[p.id] ?? null)}</b>
                   </span>
+                  <span class="pick__cash label label--dim">
+                    {money(VENMO_FEES[p.id] ?? null)} on Venmo
+                  </span>
                 </span>
               </label>
             ))}
@@ -241,6 +289,9 @@ const positions = ['Attack', 'Midfield', 'Defense', 'LSM', 'FOGO', 'Goalie'];
                 <span class="bundle__now">
                   <span class="label label--dim">Both rosters</span>
                   <b>{money(BUNDLE_PRICE)}</b>
+                  <span class="bundle__cash label label--dim">
+                    {money(VENMO_FEES[BUNDLE_ID] ?? null)} on Venmo
+                  </span>
                 </span>
 
                 {savings !== null ? (
@@ -415,7 +466,7 @@ const positions = ['Attack', 'Midfield', 'Defense', 'LSM', 'FOGO', 'Goalie'];
             <span>Continue to payment</span><span class="btn__arrow">→</span>
           </button>
           <p class="label label--dim submit__fine">
-            Nothing is charged here. The next step shows where to send the Venmo.
+            Nothing is charged here. The next step is payment — card or Venmo.
           </p>
 
           <p class="sendErr" id="reg-error" hidden role="alert">
@@ -429,14 +480,15 @@ const positions = ['Attack', 'Midfield', 'Defense', 'LSM', 'FOGO', 'Goalie'];
       <div class="sent" id="reg-sent" hidden role="status">
         <span class="sent__mark display">✓</span>
         <p class="display sent__title">Registration received.</p>
-        <p>One step left — send the program fee on Venmo below.</p>
+        <p>One step left — pay the program fee below, by card or on Venmo.</p>
       </div>
     </div>
   </section>
 
   <!-- ═══ PAYMENT ══════════════════════════════════════════════
-       Always visible so a returning parent can find the handle without
-       filling the form again; it just highlights once the form is sent. -->
+       Always visible so a returning parent can pay without filling the
+       form again; it just highlights once the form is sent. Two panels:
+       card through Stripe at the full price, Venmo at the cash rate. -->
   <section class="section pay" id="pay">
     <div class="shell">
       <div class="eyebrow reveal">
@@ -446,12 +498,53 @@ const positions = ['Attack', 'Midfield', 'Defense', 'LSM', 'FOGO', 'Goalie'];
       </div>
 
       <h2 class="display pay__title reveal">
-        Send it on <span class="display--gold">Venmo.</span>
+        Pay by card, <span class="display--gold">or save on Venmo.</span>
       </h2>
 
+      <div class="sent pay__paid" id="pay-paid" hidden role="status">
+        <span class="sent__mark display">✓</span>
+        <p class="display sent__title">Payment received.</p>
+        <p>Stripe is emailing your receipt. The spot is held once the payment and the form are matched up.</p>
+      </div>
+
+      <!-- ── CARD · STRIPE ─────────────────────────────────────
+           Each row links to that option's Stripe Payment Link. Once the
+           form is sent, the script marks the row matching the picked
+           program and tags every link with the registration reference. -->
+      <div class="pay__panel pay__panel--card reveal" id="card-panel">
+        <div class="pay__handleBox">
+          <span class="label label--dim">Card · Apple Pay · Google Pay</span>
+          <p class="pay__handle display">Pay by card</p>
+          <p class="pay__lede">
+            Secure checkout through Stripe. The receipt is emailed as soon as it goes through.
+          </p>
+        </div>
+
+        <ul class="pay__options">
+          {options.map((o) => (
+            <li class="pay__option" data-option={o.id}>
+              <span class="pay__optName">{o.name}</span>
+              <b class="pay__amt">{money(cardPrice(o.id))}</b>
+              {STRIPE_LINKS[o.id] ? (
+                <a class="btn btn--gold pay__cardBtn" href={STRIPE_LINKS[o.id]} data-stripe-link>
+                  <span>Pay by card</span><span class="btn__arrow">→</span>
+                </a>
+              ) : (
+                <span class="pay__warn pay__warn--inline">
+                  ⚠ Link not set — add it to <code>STRIPE_LINKS</code>
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <p class="pay__or label label--dim reveal"><span>or</span></p>
+
+      <!-- ── VENMO · CASH RATE ────────────────────────────────── -->
       <div class="pay__panel reveal" id="pay-panel">
         <div class="pay__handleBox">
-          <span class="label label--dim">Pay to</span>
+          <span class="label label--dim">Venmo · discounted rate</span>
           {VENMO ? (
             <>
               <p class="pay__handle display">@{VENMO}</p>
@@ -479,17 +572,16 @@ const positions = ['Attack', 'Midfield', 'Defense', 'LSM', 'FOGO', 'Goalie'];
           <li>
             <span class="pay__n">01</span>
             <div>
-              <b>Send the program fee.</b>
+              <b>Send the Venmo price.</b>
               <p>
-                {programs.map((p) => (
-                  <>
-                    {p.name} — <b class="pay__amt">{money(FEES[p.id] ?? null)}</b><br />
-                  </>
+                {options.map((o) => (
+                  <span class="pay__cashLine">
+                    {o.name} — <b class="pay__amt">{money(VENMO_FEES[o.id] ?? null)}</b>
+                    {venmoSaving(o.id) !== null && (
+                      <b class="pay__saveTag">save {money(venmoSaving(o.id))}</b>
+                    )}
+                  </span>
                 ))}
-                <span class="pay__bundleLine">
-                  Both rosters — <b class="pay__amt">{money(BUNDLE_PRICE)}</b>
-                  {savings !== null && <b class="pay__saveTag">save {money(savings)}</b>}
-                </span>
               </p>
             </div>
           </li>
@@ -950,9 +1042,6 @@ const positions = ['Attack', 'Midfield', 'Defense', 'LSM', 'FOGO', 'Goalie'];
   .pay__steps b { color: var(--bone); font-weight: 500; }
   .pay__steps p { color: var(--bone-dim); font-size: 0.9rem; margin-top: 0.3rem; line-height: 1.55; }
   .pay__amt { font-family: var(--font-mono); color: var(--gold); }
-  /* The bundle is the recommendation on the card above, so it stays the
-     emphasised line here too rather than reading as a third equal option. */
-  .pay__bundleLine { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 0.5rem; color: var(--bone); }
   .pay__saveTag {
     font-family: var(--font-mono);
     font-size: 0.68rem;
@@ -974,6 +1063,47 @@ const positions = ['Attack', 'Midfield', 'Defense', 'LSM', 'FOGO', 'Goalie'];
   }
 
   .pay__help { font-size: 0.68rem; margin-top: 2rem; line-height: 1.8; }
+
+  /* Cash price under each card price — quieter, so card reads as the headline. */
+  .pick__cash, .bundle__cash { font-size: 0.62rem; }
+  .pick__cash { text-align: right; }
+
+  .pay__lede { color: var(--bone-dim); font-size: 0.9rem; line-height: 1.55; }
+  .pay__options { list-style: none; padding: 0; display: grid; gap: 0.25rem; }
+  .pay__option {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid transparent;
+    border-bottom-color: rgba(90, 103, 113, 0.25);
+    transition: border-color 0.4s, background 0.4s;
+  }
+  .pay__option:last-child { border-bottom-color: transparent; }
+  /* The option the parent registered for, once the form is sent. */
+  .pay__option.is-picked {
+    border-color: var(--gold);
+    background: rgba(207, 174, 30, 0.06);
+  }
+  .pay__optName { color: var(--bone); }
+  .pay__warn--inline { font-size: 0.62rem; }
+
+  .pay__or {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-block: clamp(1.25rem, 3vw, 2rem);
+  }
+  .pay__or::before, .pay__or::after {
+    content: '';
+    flex: 1;
+    border-top: 1px solid rgba(90, 103, 113, 0.3);
+  }
+
+  .pay__cashLine { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.5rem; color: var(--bone); }
+
+  .pay__paid { margin-bottom: clamp(1.5rem, 3vw, 2rem); }
 
   /* Post-submit receipt, swapped in where the form was. */
   .sent {
@@ -1016,6 +1146,8 @@ const positions = ['Attack', 'Midfield', 'Defense', 'LSM', 'FOGO', 'Goalie'];
   @media (max-width: 620px) {
     .grid { grid-template-columns: 1fr; }
     .pay__memo { white-space: normal; }
+    .pay__option { grid-template-columns: minmax(0, 1fr) auto; }
+    .pay__option > :last-child { grid-column: 1 / -1; justify-self: start; }
   }
 </style>
 
@@ -1036,6 +1168,18 @@ const positions = ['Attack', 'Midfield', 'Defense', 'LSM', 'FOGO', 'Goalie'];
 
   const form = document.getElementById('reg-form') as HTMLFormElement | null;
   const panel = document.getElementById('pay-panel');
+  const cardPanel = document.getElementById('card-panel');
+
+  // Back from Stripe: every Payment Link redirects to /signup?paid=1. The
+  // registration was sent before checkout, so hide the form and confirm.
+  if (new URLSearchParams(location.search).has('paid')) {
+    form?.classList.add('is-sent');
+    const paid = document.getElementById('pay-paid');
+    if (paid) {
+      paid.hidden = false;
+      requestAnimationFrame(() => paid.scrollIntoView({ block: 'center' }));
+    }
+  }
 
   // Program cards on the home page link here as /signup?program=<id>, so the
   // parent arrives with their roster already chosen. Matched by comparing
@@ -1123,8 +1267,13 @@ const positions = ['Attack', 'Midfield', 'Defense', 'LSM', 'FOGO', 'Goalie'];
       const box = form.querySelector<HTMLInputElement>(`input[name="${key}"]`);
       data[key] = box?.checked ? 'Yes' : 'No';
     }
+    // A short reference shared by the registration email and the Stripe
+    // payment, so the two can be matched without relying on names alone.
+    // Stripe only accepts letters, digits, - and _ in client_reference_id.
+    const ref = `RLC-${Date.now().toString(36).toUpperCase()}`;
+    data.reference = ref;
     // Makes the notification email scannable without opening it.
-    data.subject = `Revolt LC registration — ${data.playerFirst} ${data.playerLast} (${data.program})`;
+    data.subject = `Revolt LC registration — ${data.playerFirst} ${data.playerLast} (${data.program}) · ${ref}`;
 
     setBusy(true);
     if (errBox) errBox.hidden = true;
@@ -1149,13 +1298,28 @@ const positions = ['Attack', 'Midfield', 'Defense', 'LSM', 'FOGO', 'Goalie'];
       return;
     }
 
-    // Swap the form for the receipt, then send the parent to the Venmo panel.
+    // Tag every card link so the Stripe payment carries the reference and
+    // checkout opens with the guardian's email already filled in.
+    document.querySelectorAll<HTMLAnchorElement>('[data-stripe-link]').forEach((a) => {
+      const url = new URL(a.href);
+      url.searchParams.set('client_reference_id', ref);
+      url.searchParams.set('prefilled_email', email?.value ?? '');
+      a.href = url.toString();
+    });
+
+    // Mark the option they registered for, so the right button is obvious.
+    cardPanel?.querySelectorAll<HTMLElement>('.pay__option').forEach((row) => {
+      row.classList.toggle('is-picked', row.dataset.option === program.value);
+    });
+
+    // Swap the form for the receipt, then send the parent to payment.
     form.classList.add('is-sent');
     const receipt = document.getElementById('reg-sent');
     if (receipt) receipt.hidden = false;
 
+    cardPanel?.classList.add('is-live');
     panel?.classList.add('is-live');
-    panel?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    cardPanel?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
   document.getElementById('copy-handle')?.addEventListener('click', async (e) => {
