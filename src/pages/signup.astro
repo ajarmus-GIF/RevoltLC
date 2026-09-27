@@ -434,13 +434,41 @@ const positions = ['Attack', 'Midfield', 'Defense', 'LSM', 'FOGO', 'Goalie'];
           </div>
           <h2 class="block__title display">Agreement</h2>
 
+          <!-- ── WAIVER ─────────────────────────────────────────
+               Collapsed by default. The accept box stays disabled until
+               the parent has opened the waiver and scrolled to its end —
+               the script unlocks it, so the text is at least put in
+               front of them before they can agree to it. -->
+          <details class="waiver" id="waiver">
+            <summary class="waiver__summary">
+              <span class="label">Amateur athletic waiver &amp; release of liability</span>
+              <span class="waiver__req label label--dim">Required · tap to read</span>
+              <span class="waiver__chev" aria-hidden="true">+</span>
+            </summary>
+
+            <div class="waiver__scroll" id="waiver-scroll" tabindex="0" aria-label="Waiver text">
+              <h3 class="waiver__head">Amateur Athletic Waiver and Release of Liability</h3>
+              <p><b>Read before signing.</b> In consideration of being allowed to participate in any way in Revolt Lacrosse Club’s athletic sports program, related events and activities, the undersigned acknowledges, appreciates, and agrees that:</p>
+              <p>The risks of injury and illness (ex: communicable diseases such as MRSA, influenza, and COVID-19) from the activities involved in this program are significant, including the potential for permanent paralysis and death, and while particular rules, equipment, and personal discipline may reduce these risks, the risks of serious injury and illness do exist; and,</p>
+              <p>I KNOWINGLY AND FREELY ASSUME ALL SUCH RISKS, both known and unknown, EVEN IF ARISING FROM THE NEGLIGENCE OF THE RELEASEES or others, and assume full responsibility for my participation; and,</p>
+              <p>I willingly agree to comply with the stated and customary terms and conditions for participation. If, however, I observe any unusual significant hazard during my presence or participation, I will remove myself from participation and bring such to the attention of the nearest official immediately; and,</p>
+              <p>I, for myself and on behalf of my heirs, assigns, personal representatives and next of kin, HEREBY RELEASE AND HOLD HARMLESS Revolt Lacrosse Club, their officers, officials, agents, and/or employees, other participants, sponsoring agencies, sponsors, advertisers, and if applicable, owners and lessors of premises used to conduct the event (“RELEASEES”), WITH RESPECT TO ANY AND ALL INJURY, ILLNESS, DISABILITY, DEATH, or loss or damage to person or property, WHETHER ARISING FROM THE NEGLIGENCE OF THE RELEASEES OR OTHERWISE, to the fullest extent permitted by law.</p>
+              <p>I HAVE READ THIS RELEASE OF LIABILITY AND ASSUMPTION OF RISK AGREEMENT, FULLY UNDERSTAND ITS TERMS, UNDERSTAND THAT I HAVE GIVEN UP SUBSTANTIAL RIGHTS BY SIGNING IT, AND SIGN IT FREELY AND VOLUNTARILY WITHOUT ANY INDUCEMENT.</p>
+
+              <h3 class="waiver__head">For participants of minority age (under age 18 at the time of registration)</h3>
+              <p>This is to certify that I, as parent/guardian with legal responsibility for this participant, have read and explained the provisions in this waiver/release to my child/ward including the risks of the activity and his/her responsibilities for adhering to the rules and regulations. Furthermore, my child/ward understands and accepts these risks and responsibilities. I for myself, my spouse, and child/ward do consent and agree to his/her release provided above for all the Releasees and myself, my spouse, and child/ward do release and agree to indemnify and hold harmless the Releasees from any and all liabilities incident to my minor child’s/ward’s involvement or participation in these activities as provided above, EVEN IF ARISING FROM THEIR NEGLIGENCE, to the fullest extent permitted by law.</p>
+
+              <p class="waiver__end label label--dim">— End of waiver —</p>
+            </div>
+          </details>
+
           <div class="checks">
-            <label class="check">
-              <input type="checkbox" name="waiver" required />
+            <label class="check check--locked" id="waiver-check">
+              <input type="checkbox" name="waiver" required disabled />
               <span class="check__box" aria-hidden="true"></span>
               <span class="check__label">
-                I've read and accept the participation waiver and release of liability.
-                <em>(Placeholder — link the real waiver here.)</em>
+                I have read the waiver and accept the terms.
+                <em id="waiver-hint">Open the waiver above and scroll to the bottom to unlock this box.</em>
               </span>
             </label>
             <label class="check">
@@ -982,6 +1010,63 @@ const positions = ['Attack', 'Midfield', 'Defense', 'LSM', 'FOGO', 'Goalie'];
   .check:hover .check__label { color: var(--bone); }
   .check__label em { color: var(--slate); font-style: normal; font-family: var(--font-mono); font-size: 0.75rem; }
 
+  /* Locked until the waiver has been scrolled through. */
+  .check--locked { cursor: not-allowed; }
+  .check--locked .check__box { opacity: 0.4; }
+  .check--locked:hover .check__label { color: var(--bone-dim); }
+  .check__label em { display: block; margin-top: 0.2rem; }
+
+  /* --- Waiver ---------------------------------------------------------- */
+  .waiver {
+    border: 1px solid rgba(90, 103, 113, 0.35);
+    background: var(--navy-lift);
+    margin-bottom: 1.5rem;
+  }
+  .waiver[open] { border-color: rgba(207, 174, 30, 0.45); }
+  .waiver__summary {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    list-style: none;
+  }
+  .waiver__summary::-webkit-details-marker { display: none; }
+  .waiver__summary:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+  .waiver__req { flex: 1; }
+  .waiver__chev {
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    color: var(--gold);
+    transition: transform 0.3s;
+  }
+  .waiver[open] .waiver__chev { transform: rotate(45deg); }
+
+  .waiver__scroll {
+    max-height: min(22rem, 55vh);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0.25rem 1.25rem 1.25rem;
+    border-top: 1px solid rgba(90, 103, 113, 0.3);
+    color: var(--bone-dim);
+    font-size: 0.85rem;
+    line-height: 1.65;
+  }
+  .waiver__scroll:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+  .waiver__scroll p { margin-top: 0.9rem; }
+  .waiver__scroll b { color: var(--bone); }
+  .waiver__head {
+    margin-top: 1.25rem;
+    color: var(--bone);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+  .waiver__end { text-align: center; margin-top: 1.5rem; font-size: 0.62rem; }
+
   .hp { position: absolute; left: -9999px; opacity: 0; width: 0; height: 0; }
 
   .submit { display: grid; gap: 0.9rem; justify-items: start; }
@@ -1190,6 +1275,32 @@ const positions = ['Attack', 'Midfield', 'Defense', 'LSM', 'FOGO', 'Goalie'];
     radios?.forEach((r) => { if (r.value === wanted) r.checked = true; });
   }
 
+  // Waiver: the accept box unlocks only once the parent has opened the
+  // waiver and reached the bottom of it. A few px of slack covers browsers
+  // that round scroll positions.
+  const waiverDetails = document.getElementById('waiver') as HTMLDetailsElement | null;
+  const waiverScroll = document.getElementById('waiver-scroll');
+  const waiverLabel = document.getElementById('waiver-check');
+  const waiverBox = waiverLabel?.querySelector<HTMLInputElement>('input');
+  const waiverHint = document.getElementById('waiver-hint');
+
+  const unlockWaiver = () => {
+    if (!waiverBox || !waiverBox.disabled) return;
+    waiverBox.disabled = false;
+    waiverLabel?.classList.remove('check--locked');
+    if (waiverHint) waiverHint.hidden = true;
+  };
+  const checkWaiverEnd = () => {
+    if (!waiverScroll) return;
+    const { scrollTop, scrollHeight, clientHeight } = waiverScroll;
+    if (scrollTop + clientHeight >= scrollHeight - 8) unlockWaiver();
+  };
+  waiverScroll?.addEventListener('scroll', checkWaiverEnd, { passive: true });
+  // On a tall screen the whole text may fit with no scrolling at all.
+  waiverDetails?.addEventListener('toggle', () => {
+    if (waiverDetails.open) requestAnimationFrame(checkWaiverEnd);
+  });
+
   const errBox = document.getElementById('reg-error');
   const errDetail = document.getElementById('reg-error-detail');
   const submitBtn = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
@@ -1239,7 +1350,10 @@ const positions = ['Attack', 'Midfield', 'Defense', 'LSM', 'FOGO', 'Goalie'];
       const firstBad =
         form.querySelector<HTMLElement>('[aria-invalid="true"]') ??
         (!program ? form.querySelector<HTMLElement>('input[name="program"]') : null) ??
-        form.querySelector<HTMLElement>('input[name="waiver"]');
+        (!waiver?.checked ? waiverDetails : null) ??
+        form.querySelector<HTMLElement>('input[name="commitment"]');
+      // Point them at the text itself if the waiver is what's missing.
+      if (!waiver?.checked && waiverDetails) waiverDetails.open = true;
       firstBad?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       firstBad?.focus({ preventScroll: true });
       return;
@@ -1272,6 +1386,8 @@ const positions = ['Attack', 'Midfield', 'Defense', 'LSM', 'FOGO', 'Goalie'];
     // Stripe only accepts letters, digits, - and _ in client_reference_id.
     const ref = `RLC-${Date.now().toString(36).toUpperCase()}`;
     data.reference = ref;
+    // Timestamped so the club's record shows when the waiver was accepted.
+    data.waiver = `Yes — read and accepted ${new Date().toLocaleString('en-US')}`;
     // Makes the notification email scannable without opening it.
     data.subject = `Revolt LC registration — ${data.playerFirst} ${data.playerLast} (${data.program}) · ${ref}`;
 
