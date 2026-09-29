@@ -1,0 +1,284 @@
+---
+/**
+ * REVOLT LC — COLLEGE ODDS
+ *
+ * Four empty columns sit under a question with a button on their baseline.
+ * Clicking the button retires it, and the bars rise out of the spot where it
+ * was — lacrosse tallest. The statistic sentence lands underneath.
+ *
+ * Source: NCAA Research, "Estimated Probability of Competing in College
+ * Athletics", 2024–25 — the "Overall % HS to NCAA" column for men's sports.
+ * `pct` is copied exactly as printed; "1 in N" is 100 / pct, rounded.
+ * These are roster spots across D-I/II/III, not scholarships.
+ */
+const SOURCE_URL =
+  'https://www.ncaa.org/student-athletes/probability-of-competing-beyond-high-school/';
+
+const sports = [
+  { name: 'Lacrosse',   pct: 14.7, lax: true },
+  { name: 'Baseball',   pct: 8.8 },
+  { name: 'Football',   pct: 8.1 },
+  { name: 'Basketball', pct: 3.6 },
+];
+
+/** Bars scale from zero against a ceiling just above the tallest. */
+const CEILING = 15;
+const oneIn = (pct: number) => Math.round(100 / pct);
+---
+
+<section class="odds" aria-labelledby="odds-title">
+  <div class="shell">
+    <div class="eyebrow">
+      <span class="label">[ The odds ]</span>
+      <span class="eyebrow__rule"></span>
+      <span class="label label--dim">NCAA · 2024–25</span>
+    </div>
+
+    <h2 class="odds__title display" id="odds-title">
+      What are the odds <span class="display--gold">they play in college?</span>
+    </h2>
+
+    <div class="odds__stage" data-odds>
+      <div class="odds__cols" aria-hidden="true">
+        {sports.map((s, i) => (
+          <div
+            class:list={['col', { 'col--lax': s.lax }]}
+            style={`--p:${s.pct / CEILING};--i:${i}`}
+          >
+            <div class="col__area">
+              <span class="col__ghost">?</span>
+              <span class="col__bar"></span>
+              <span class="col__num display">1 in {oneIn(s.pct)}</span>
+            </div>
+            <span class="col__name label">{s.name}</span>
+          </div>
+        ))}
+      </div>
+
+      <button type="button" class="btn btn--gold odds__cta" data-odds-cta>
+        <span>Reveal the odds</span><span class="btn__arrow">↑</span>
+      </button>
+    </div>
+
+    <!-- Collapsed to nothing until the click, so the button isn't followed
+         by a tall empty gap; it opens as the bars finish rising. -->
+    <div class="odds__after">
+    <div class="odds__afterInner">
+    <p class="odds__stat" data-odds-stat tabindex="-1">
+      A high school lacrosse player has about a <b class="odds__lax">1&nbsp;in&nbsp;7</b> chance of
+      playing in college, compared with <b>1&nbsp;in&nbsp;11</b> for baseball, <b>1&nbsp;in&nbsp;12</b> for
+      football, and <b>1&nbsp;in&nbsp;28</b> for basketball.{' '}
+      <a class="clink odds__src" href={SOURCE_URL} target="_blank" rel="noopener noreferrer">(NCAA, 2024-25)</a>
+    </p>
+
+    <!-- The payoff: lands last, once the numbers have made the case. -->
+    <div class="odds__kicker">
+      <span class="odds__kickerRule" aria-hidden="true"></span>
+      <p class="odds__kickerTitle display">
+        That's why the offseason <span class="display--gold">is so important.</span>
+      </p>
+    </div>
+    </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Centred column: the graph is the centrepiece, and everything around it
+     lines up on the same axis. */
+  .odds { padding-block: clamp(3.5rem, 7vw, 6rem); text-align: center; }
+  .odds .eyebrow { justify-content: center; }
+  .odds .eyebrow__rule { max-width: 160px; }
+
+  .odds__title { font-size: var(--fs-lg); margin-bottom: clamp(2rem, 4vw, 3rem); transform-origin: center bottom; }
+
+  /* ── STAGE ──────────────────────────────────────────────────────
+     Heights are reserved up front, so nothing below the section jumps
+     when the bars rise. */
+  .odds__stage {
+    position: relative;
+    max-width: 880px;
+    margin-inline: auto;
+    padding-bottom: 2.4rem; /* room for the sport names under the baseline */
+  }
+
+  .odds__cols {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(0.75rem, 3vw, 2.5rem);
+    height: clamp(260px, 34vw, 400px);
+    border-bottom: 1px solid var(--slate);
+  }
+
+  .col { position: relative; display: grid; }
+  .col__area {
+    --room: 2.6rem; /* headroom for the number above the tallest bar */
+    position: relative;
+    height: 100%;
+  }
+
+  /* Before: an empty dashed slot with a question mark, all the same height,
+     so nothing is given away until the click. */
+  .col__ghost {
+    position: absolute;
+    inset: var(--room) 0 0;
+    display: grid;
+    place-items: center;
+    border: 1px dashed rgba(90, 103, 113, 0.45);
+    border-bottom: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.75rem, 4vw, 2.75rem);
+    color: rgba(90, 103, 113, 0.6);
+    transition: opacity 0.4s, border-color 0.6s;
+  }
+
+  .col__bar {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 0;
+    background: #6B7884;
+    border-radius: 4px 4px 0 0;
+    transition: height 1.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: calc(0.35s + var(--i) * 0.14s);
+  }
+  .col--lax .col__bar { background: var(--gold); }
+
+  /* The number rides the top of its bar on the same curve. */
+  .col__num {
+    position: absolute;
+    left: 0; right: 0;
+    bottom: 0;
+    text-align: center;
+    font-size: clamp(1.3rem, 3.2vw, 2.4rem);
+    color: var(--bone);
+    white-space: nowrap;
+    transform-origin: center bottom;
+    opacity: 0;
+    transition: bottom 1.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s;
+    transition-delay: calc(0.35s + var(--i) * 0.14s);
+  }
+  .col--lax .col__num { color: var(--gold); }
+
+  .col__name {
+    position: absolute;
+    top: calc(100% + 0.85rem);
+    left: 0; right: 0;
+    text-align: center;
+    color: var(--bone-dim);
+    font-size: clamp(0.56rem, 1.4vw, 0.7rem);
+    letter-spacing: 0.16em;
+  }
+  .col--lax .col__name { color: var(--gold); }
+
+  /* ── BUTTON ──────────────────────────────────────────────────────
+     Rests on the baseline, centred over the columns — the spot the bars
+     grow out of — without covering the sport names underneath. */
+  .odds__cta {
+    position: absolute;
+    left: 50%;
+    bottom: calc(2.4rem + 1.25rem);
+    transform: translateX(-50%);
+    white-space: nowrap;
+    padding-inline: clamp(2rem, 6vw, 4.5rem);
+    box-shadow: 0 0 0 8px var(--navy-deep);
+    transition: color 0.35s, border-color 0.35s, opacity 0.35s, transform 0.45s cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  .odds__cta[hidden] { display: none; }
+  /* A slow glow once it scrolls into view, so the eye finds it. */
+  .odds__cta.is-seen { animation: nudge 2.4s ease-in-out 0.6s 2; }
+  @keyframes nudge {
+    0%, 100% { box-shadow: 0 0 0 8px var(--navy-deep), 0 0 0 8px rgba(207, 174, 30, 0); }
+    50%      { box-shadow: 0 0 0 8px var(--navy-deep), 0 0 0 16px rgba(207, 174, 30, 0.25); }
+  }
+
+  /* ── PLAYED ──────────────────────────────────────────────────────
+     The button flattens into the baseline and the bars take over. */
+  .is-played .odds__cta {
+    opacity: 0;
+    transform: translate(-50%, 1.25rem) scale(0.4, 0.05);
+    transform-origin: center bottom;
+    pointer-events: none;
+  }
+  .is-played .col__ghost { opacity: 0; }
+  .is-played .col__bar { height: calc((100% - var(--room)) * var(--p)); }
+  .is-played .col__num {
+    opacity: 1;
+    bottom: calc((100% - var(--room)) * var(--p) + 0.45rem);
+  }
+
+  /* ── STATISTIC ───────────────────────────────────────────────── */
+  .odds__stat {
+    margin-top: clamp(1.75rem, 3.5vw, 2.5rem);
+    max-width: 62ch;
+    margin-inline: auto;
+    font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+    line-height: 1.55;
+    color: var(--bone-dim);
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.7s, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: 1.5s;
+  }
+  .odds__stat:focus { outline: none; }
+  .odds__stat b { color: var(--bone); font-weight: 600; }
+  .odds__stat .odds__lax { color: var(--gold); }
+  .odds__src { font-size: 0.8em; color: var(--slate); white-space: nowrap; }
+  .odds__after {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 1s cubic-bezier(0.22, 1, 0.36, 1) 1.1s;
+  }
+  .odds__afterInner { overflow: hidden; min-height: 0; }
+  .is-played ~ .odds__after { grid-template-rows: 1fr; }
+  .is-played ~ .odds__after .odds__stat { opacity: 1; transform: none; }
+
+  .odds__kicker {
+    margin-top: clamp(2.5rem, 5vw, 4rem);
+    display: grid;
+    justify-items: center;
+    gap: clamp(1.25rem, 2.5vw, 1.75rem);
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.8s, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: 2.1s;
+  }
+  .odds__kickerRule {
+    display: block;
+    width: clamp(3rem, 8vw, 5rem);
+    height: 2px;
+    background: var(--gold);
+  }
+  .odds__kickerTitle { font-size: var(--fs-xl); max-width: 16ch; transform-origin: center bottom; }
+  .is-played ~ .odds__after .odds__kicker { opacity: 1; transform: none; }
+
+  @media (max-width: 620px) {
+    .odds__cta { padding-inline: 1.6rem; }
+  }
+</style>
+
+<script>
+  const stage = document.querySelector<HTMLElement>('[data-odds]');
+  const cta = stage?.querySelector<HTMLButtonElement>('[data-odds-cta]');
+  const stat = document.querySelector<HTMLElement>('[data-odds-stat]');
+
+  if (stage && cta) {
+    // Nudge the button once when it first scrolls into view.
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          cta.classList.add('is-seen');
+          io.disconnect();
+        }
+      },
+      { threshold: 0.6 }
+    );
+    io.observe(cta);
+
+    cta.addEventListener('click', () => {
+      stage.classList.add('is-played');
+      // Focus would be stranded on a vanished button — hand it to the sentence.
+      stat?.focus({ preventScroll: true });
+      cta.addEventListener('transitionend', () => { cta.hidden = true; }, { once: true });
+    });
+  }
+</script>
