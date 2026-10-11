@@ -1,0 +1,10 @@
+// Cloudflare Workers configuration. The site is fully static, so there is no
+// Worker script — Cloudflare serves the Astro build output in dist/ directly.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "revolt-lc",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist"
+  }
+}
