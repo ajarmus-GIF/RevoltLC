@@ -235,7 +235,10 @@ const first = board[0].t.toUpperCase().padEnd(CELLS, ' ').split('');
   .hero__line:nth-child(1) { animation-delay: 0.22s; }
   .hero__line:nth-child(2) { animation-delay: 0.32s; }
   .hero__line:nth-child(3) { animation-delay: 0.42s; }
-  .hero__title { animation: none; }
+  /* Must outrank `.hero__inner > *`: the rise keyframes set transform, which
+     would wipe the title's skew until the animation ends. The lines rise on
+     their own instead. */
+  .hero__inner > .hero__title { animation: none; }
   .hero__foot { animation-delay: 0.6s; }
 
   /* --- Split-flap board ---------------------------------------------------
